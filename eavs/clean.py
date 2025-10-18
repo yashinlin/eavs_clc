@@ -1,10 +1,11 @@
-from pathlib import Path
+#from pathlib import Path
 
 from loguru import logger
 import pandas as pd
 from pandera.io import from_yaml
 import pyarrow as pa
 from yaml import safe_load
+from pathlib import Path
 
 from eavs.config import CLEANED_DATA_DIR, RAW_DATA_DIR
 
@@ -28,6 +29,26 @@ def register_cleaning_function(year):
 
     return decorator
 
+@register_cleaning_function(2024)
+def clean_2024():
+    metadata = load_column_mapping(2024, "1.0")
+    dtypes = {col["raw_name"]: f"{col['dtype']}[pyarrow]" for col in metadata}
+    mapping = {col["raw_name"]: col["name"] for col in metadata}
+
+    df = pd.read_excel(
+        RAW_DATA_DIR / "2024" / "1.0" / "2024_EAVS_for_Public_Release_V1_xlsx.xlsx",
+        engine="calamine",
+        dtype_backend="pyarrow",
+        dtype=dtypes,
+        na_values=["Does not apply", "Data not available", "Valid skip"],
+    )
+
+    for col in dtypes:
+        if dtypes[col] == "string[pyarrow]":
+            df[col] = df[col].astype(pd.ArrowDtype(pa.string()))
+
+    df_out = df.loc[:, mapping.keys()].rename(columns=mapping)
+    return df_out
 
 @register_cleaning_function(2022)
 def clean_2022():
