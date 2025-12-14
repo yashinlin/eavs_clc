@@ -194,10 +194,23 @@ def main():
             log.warning(f"Skipping cleaning for year {year} due to missing or empty config.")
             continue
 
+        # df = clean_data(year, year_config)
+        # if not df.empty:
+        #     cleaned_dataframes.append(df)
+
+        # TEMP START
         df = clean_data(year, year_config)
-        if not df.empty:
+
+        # 🔎 DIAGNOSTIC LOG — TEMPORARY
+        log.info(f"{year} cleaned dataframe shape: {df.shape}")
+
+        if df.empty:
+            log.warning(f"{year} dataframe is EMPTY after cleaning.")
+        else:
             cleaned_dataframes.append(df)
-            
+            save_dataframes(df, f'{year}_cleaned', output_dir)
+        # TEMP end
+
             # **NEW:** Save individual year file in all formats
             save_dataframes(df, f'{year}_cleaned', output_dir)
             
