@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 import pandas as pd
 import pandera as pa
 from pandera.typing import DataFrame, Series, String
+from eavs.clean_timeseries import clean_timeseries
 
 # -----------------
 # 1. Configuration
