@@ -1,12 +1,13 @@
-import yaml
 import re
 from pathlib import Path
-from loguru import logger as log
 from typing import Dict, Any, List
 
 import pandas as pd
 import pandera as pa
 from pandera.typing import DataFrame, Series, String
+import yaml
+from loguru import logger as log
+
 from eavs.clean_timeseries import clean_timeseries
 
 # -----------------
@@ -19,7 +20,7 @@ CONFIG_PATH = PROJ_ROOT / 'eavs' / 'assets' / 'column_mappings'
 
 def load_config(year: int) -> List[Dict[str, Any]]:
     """
-    Dynamically loads the year-specific config file (e.g., 2022.yaml).
+    Dynamically load the year-specific config file (e.g., 2022.yaml).
     Handles top-level nesting (e.g., under a 'columns' key) to ensure 
     a clean list of mappings is returned.
     """
@@ -43,7 +44,7 @@ def load_config(year: int) -> List[Dict[str, Any]]:
                 return data
                 
             # Fallback for unexpected structure
-            log.warning(f"Config for year {year} is in an unexpected format. Returning empty list.")
+            log.warning(f"Config for year {year} is in an unexpected format (neither dictionary nor list). Returning empty list.")
             return []
             
     except Exception as e:
@@ -55,6 +56,21 @@ def load_config(year: int) -> List[Dict[str, Any]]:
 # -----------------
 
 class CleanedEAVSSchema(pa.DataFrameModel):
+    """
+    Validate core identifier fields in cleaned EAVS datasets via minimal Pandera schema.
+
+    This schema enforces basic structural integrity by checking that
+    all cleaned EAVS outputs contain valid FIPS codes and year values.
+    It is intentionally permissive about all other columns so that
+    different years and products (e.g., timeseries vs per-year files)
+    can include different sets of variables without failing validation.
+
+    Notes:
+    - Only `fips_code` and `year` are validated.
+    - Additional columns are allowed and ignored by this schema.
+    - Type coercion is enabled to normalize input data before validation.
+    """
+
     # FIPS codes must be 5-digit strings
     fips_code: Series[String] = pa.Field(str_matches=r'^\d{5}$')
     
@@ -62,7 +78,7 @@ class CleanedEAVSSchema(pa.DataFrameModel):
     year: Series[int] = pa.Field(ge=2000, le=2030)
     
     class Config:
-        strict = False 
+        strict = False # allows dataframe to have extra columns beyond the above two
         coerce = True
         
 schema = CleanedEAVSSchema
@@ -73,7 +89,7 @@ schema = CleanedEAVSSchema
 
 def clean_data(year: int, config: List[Dict[str, Any]]) -> pd.DataFrame:
     """
-    Loads raw EAVS data for a given year, applies renaming and type conversion 
+    Loadsraw EAVS data for a given year, applies renaming and type conversion 
     based on the loaded configuration, and ensures robust column selection.
     
     NOTE: This function relies on raw data being found in:
@@ -153,7 +169,7 @@ def combine_data(cleaned_dfs: List[pd.DataFrame]) -> pd.DataFrame:
 # 4. New Saving Function (Added to meet requirements)
 # -----------------
 def save_dataframes(df: pd.DataFrame, filename: str, output_dir: Path):
-    """Saves a DataFrame to Parquet, XLSX, and CSV formats."""
+    """Save a DataFrame to Parquet, XLSX, and CSV formats."""
     log.info(f"Saving {filename} data to multiple formats in {output_dir.name}/")
     
     # Ensure output directory exists (redundant with main, but safer here)
@@ -179,11 +195,16 @@ def save_dataframes(df: pd.DataFrame, filename: str, output_dir: Path):
 # 5. Main Execution (Modified to use new function)
 # -----------------
 
-def main():
-    """Main function to clean and combine EAVS data, saving all formats."""
+def main():    
+    """
+    Run the EAVS cleaning pipeline for selected years and the historical timeseries dataset, 
+    producing per-year, combined, and timeseries outputs."""
+
     years = [2020, 2022, 2024] 
     
-    # NEW: Define output directory and ensure it exists
+    log.info(f"Starting per-year cleaning for years: {years}")
+    
+    # Define output directory and ensure it exists
     output_dir = PROJ_ROOT / 'data' / 'cleaned'
     output_dir.mkdir(parents=True, exist_ok=True)
     
@@ -191,30 +212,26 @@ def main():
     for year in years:
         year_config = load_config(year) 
         
-        if not year_config:
+        if not year_config: # if year_config is missing or empty
             log.warning(f"Skipping cleaning for year {year} due to missing or empty config.")
             continue
 
-        # df = clean_data(year, year_config)
-        # if not df.empty:
-        #     cleaned_dataframes.append(df)
-
-        # TEMP START
         df = clean_data(year, year_config)
-
-        # 🔎 DIAGNOSTIC LOG — TEMPORARY
-        log.info(f"{year} cleaned dataframe shape: {df.shape}")
-
-        if df.empty:
-            log.warning(f"{year} dataframe is EMPTY after cleaning.")
-        else:
+        if not df.empty:
             cleaned_dataframes.append(df)
             save_dataframes(df, f'{year}_cleaned', output_dir)
-        # TEMP end
-
-            # **NEW:** Save individual year file in all formats
-            save_dataframes(df, f'{year}_cleaned', output_dir)
             
+    # Run timeseries cleaning via its own module (saves its own parquet)
+    try:
+        ts_df = clean_timeseries()
+        if ts_df is not None and not ts_df.empty:
+            log.info(f"Timeseries file processed in separate module: {len(ts_df)} rows")
+        else:
+            log.info("Timeseries was processed but returned empty or not processed.")
+    except Exception as e:
+        # Protect the pipeline from timeseries failures
+        log.error(f"Error when running timeseries module: {e}")
+
     if not cleaned_dataframes:
         log.error("No valid dataframes were cleaned. Exiting.")
         return
@@ -224,6 +241,7 @@ def main():
 
     # Ensure fips_code is string before schema validation
     cleaned_df['fips_code'] = cleaned_df['fips_code'].astype(str)
+    log.info(f"Starting per-year cleaning for years: {years}")
     
     try:
         log.info(f"Validating combined data with {len(cleaned_df)} rows...")
