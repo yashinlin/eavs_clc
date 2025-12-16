@@ -79,7 +79,7 @@ def clean_timeseries() -> pd.DataFrame:
 
     Reads column mappings from `eavs/assets/column_mappings/timeseries.yaml`,
     applies dtypes, renames short raw codes into full names, validates using
-    `timeseries_process_schema.yaml` (via pandera.from_yaml), and writes a
+    `timeseries.yaml` (via pandera.from_yaml), and writes a
     Parquet file to `data/cleaned/timeseries.parquet`.
     """
     # Constants
@@ -189,7 +189,7 @@ def clean_timeseries() -> pd.DataFrame:
             df["year"] = pd.NA
 
     # Validate against timeseries schema if present
-    schema_path = Path(__file__).parent / "assets" / "timeseries_process_schema.yaml"
+    schema_path = Path(__file__).parent / "assets" / "timeseries.yaml"
     if schema_path.exists():
         try:
             ts_schema = from_yaml(schema_path)
