@@ -10,8 +10,8 @@ from eavs.config import RAW_DATA_DIR
 
 MANIFEST_PATH = Path(__file__).parent / "assets" / "manifest.jsonl"
 
-
 def load_manifest() -> pd.DataFrame:
+    ""
     df = pd.read_json(MANIFEST_PATH, lines=True)
     return df
 

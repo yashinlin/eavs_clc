@@ -1,17 +1,15 @@
-import re
 from pathlib import Path
 from typing import Dict, Any, List
 
 import pandas as pd
 import pandera as pa
-from pandera.typing import DataFrame, Series, String
 import yaml
 from loguru import logger as log
 
 from eavs.clean_timeseries import clean_timeseries
 
 # -----------------
-# 1. Configuration
+# 0. Configuration
 # -----------------
 # PROJ_ROOT = directory above 'eavs' (ie. /home/user/eavs_clc)
 PROJ_ROOT = Path(__file__).resolve().parent.parent
@@ -31,9 +29,9 @@ def load_config(year: int) -> List[Dict[str, Any]]:
     
     try:
         with open(config_file, 'r') as f:
-            data = yaml.safe_load(f)
+            data = yaml.safe_load(f) 
             
-            # If the loaded data is a dictionary, extract the list from the 'columns' key.
+            # If the loaded data is a dictionary (ie has key:value pairs), extract the list from the 'columns' key.
             if isinstance(data, dict) and 'columns' in data:
                 log.debug("Extracted column list from 'columns' key.")
                 return data['columns']
@@ -52,7 +50,7 @@ def load_config(year: int) -> List[Dict[str, Any]]:
         return []
 
 # -----------------
-# 2. Schema Definition
+# 1. Schema Definition
 # -----------------
 
 class CleanedEAVSSchema(pa.DataFrameModel):
@@ -84,12 +82,44 @@ class CleanedEAVSSchema(pa.DataFrameModel):
 schema = CleanedEAVSSchema
 
 # -----------------
+# 2. Datatype conversion configuration
+# -----------------
+
+def apply_yaml_dtypes(df: pd.DataFrame, configs: List[Dict[str, Any]]) -> pd.DataFrame:
+    """
+    Convert dataframe columns to pandas dtypes based on YAML configs.
+    Assumes columns have already been renamed to their `name` values.
+    """
+    for c in configs:
+        name = c.get("name")
+        dtype = str(c.get("dtype", "")).lower()
+
+        if not name or name not in df.columns:
+            continue
+
+        try:
+            if dtype.startswith("int"):
+                df[name] = pd.to_numeric(df[name], errors="coerce").astype(pd.Int64Dtype())
+            elif dtype.startswith("float"):
+                df[name] = pd.to_numeric(df[name], errors="coerce").astype(pd.Float64Dtype())
+            elif dtype.startswith("string"):
+                # pandas nullable string dtype
+                df[name] = df[name].astype("string")
+            else:
+                # Unknown dtype — leave as-is but log once in a while
+                log.debug(f"Skipping dtype coercion for column '{name}' with dtype='{dtype}'")
+        except Exception as e:
+            log.warning(f"Failed to coerce '{name}' to '{dtype}': {e}")
+
+    return df
+
+# -----------------
 # 3. Cleaning Functions
 # -----------------
 
 def clean_data(year: int, config: List[Dict[str, Any]]) -> pd.DataFrame:
     """
-    Loadsraw EAVS data for a given year, applies renaming and type conversion 
+    Loads raw EAVS data for a given year, applies renaming and type conversion 
     based on the loaded configuration, and ensures robust column selection.
     
     NOTE: This function relies on raw data being found in:
@@ -116,7 +146,7 @@ def clean_data(year: int, config: List[Dict[str, Any]]) -> pd.DataFrame:
     mapping = {col['raw_name']: col['name'] for col in valid_configs}
     dtypes = {col['raw_name']: str for col in valid_configs} 
 
-    # Load raw data
+    # EXTRACT: Load raw data
     try:
         df = pd.read_excel(data_path, sheet_name=0, engine='openpyxl', dtype=dtypes)
     except Exception as e:
@@ -131,31 +161,52 @@ def clean_data(year: int, config: List[Dict[str, Any]]) -> pd.DataFrame:
         log.error(f"FIPS code column not found in {year} data.")
         return pd.DataFrame() 
 
-    # Add year column and normalize FIPS
-    df['year'] = year
-    df['fips_code'] = df['fips_code'].astype(str).str.zfill(5).str[:5]
+    # Add year column
+    df["year"] = year
+
+    # --- TRANSFORM: Normalize & interpret FIPSCode variants ---
+
+    # Preserve raw for traceability
+    df["fips_code_raw"] = df["fips_code"].astype(str).str.strip()
+
+    # Digit-only identifier (keeps UOCAVA 23, tract GEOIDs, etc.)
+    digits = df["fips_code_raw"].str.replace(r"\D", "", regex=True)
+    df["geoid"] = digits
+
+    # County-only 5-digit code for validation + county joins
+    df["fips_code"] = pd.NA
+
+    # UOCAVA marker (keep separate; do NOT force into county fips)
+    df["is_uocava"] = digits.eq("23")
+
+    # Standard county FIPS already 5 digits
+    county5_mask = digits.str.len().eq(5) & ~df["is_uocava"]
+    df.loc[county5_mask, "fips_code"] = digits[county5_mask]
+
+    # CA 2024 formatting issue (len 9 like 600100000): derive county FIPS = first 4 digits, zfill to 5
+    len9_mask = digits.str.len().eq(9)
+    df.loc[len9_mask, "fips_code"] = digits[len9_mask].str[:4].str.zfill(5)
+
+    # Logging summary (helpful for PR reviewers)
+    len_counts = digits.str.len().value_counts(dropna=False).to_dict()
+    log.info(f"{year} FIPSCode digit-length distribution: {len_counts}")
+    log.info(
+        f"{year} derived county fips_code counts: "
+        f"county5={county5_mask.sum()}, len9_fixed={len9_mask.sum()}, "
+        f"uocava={df['is_uocava'].sum()}, county_missing={df['fips_code'].isna().sum()}"
+    )
 
     # Apply YAML renaming & Robust Filtering
     mapping_keys = mapping.keys()
     existing_keys = [k for k in mapping_keys if k in df.columns]
     
-    cols_to_select = existing_keys + ['fips_code', 'year']
+    cols_to_select = existing_keys + ['fips_code', 'year', 'geoid', 'is_uocava']
     
     df = df.filter(items=cols_to_select, axis=1)
 
     renaming_map = {k: mapping[k] for k in existing_keys}
     df = df.rename(columns=renaming_map)
-    
-    # Convert numerical columns to Int64Dtype (EAVS variables: A1, B2, etc.)
-    for col in df.columns:
-        if re.match(r'^[A-Z]\d+$', str(col)):
-            try:
-                # Use nullable integer dtype
-                df[col] = pd.to_numeric(df[col], errors='coerce').astype(pd.Int64Dtype())
-            except Exception:
-                log.warning(f"Could not convert column {col} to integer type.")
-                df[col] = pd.NA
-
+    df = apply_yaml_dtypes(df, valid_configs)
     return df
 
 def combine_data(cleaned_dfs: List[pd.DataFrame]) -> pd.DataFrame:
@@ -164,9 +215,8 @@ def combine_data(cleaned_dfs: List[pd.DataFrame]) -> pd.DataFrame:
     combined_df = pd.concat(cleaned_dfs, ignore_index=True)
     return combined_df
 
-
 # -----------------
-# 4. New Saving Function (Added to meet requirements)
+# 4. New Saving Function 
 # -----------------
 def save_dataframes(df: pd.DataFrame, filename: str, output_dir: Path):
     """Save a DataFrame to Parquet, XLSX, and CSV formats."""
@@ -175,24 +225,20 @@ def save_dataframes(df: pd.DataFrame, filename: str, output_dir: Path):
     # Ensure output directory exists (redundant with main, but safer here)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. Parquet
+    # Always save Parquet — fastest, smallest, best for analysis
     parquet_path = output_dir / f"{filename}.parquet"
     df.to_parquet(parquet_path, index=False)
-    log.info(f"Saved: {parquet_path.name}")
+    log.success(f"Parquet saved: {parquet_path.name}")
 
-    # 2. Excel (XLSX)
-    excel_path = output_dir / f"{filename}.xlsx"
-    df.to_excel(excel_path, index=False)
-    log.info(f"Saved: {excel_path.name}")
-
-    # 3. CSV
-    csv_path = output_dir / f"{filename}.csv"
-    df.to_csv(csv_path, index=False)
-    log.info(f"Saved: {csv_path.name}")
+    # Only save CSV for the combined dataset (as requested)
+    if save_csv:
+        csv_path = output_dir / f"{filename}.csv"
+        df.to_csv(csv_path, index=False)
+        log.success(f"CSV saved (combined only): {csv_path.name}")
 
 
 # -----------------
-# 5. Main Execution (Modified to use new function)
+# 5. Main Execution 
 # -----------------
 
 def main():    
@@ -239,7 +285,14 @@ def main():
     combined_df = combine_data(cleaned_dataframes)
     cleaned_df = combined_df.copy()
 
-    # Ensure fips_code is string before schema validation
+    # Save combined dataset with all geographies (county + UOCAVA + sub-county GEOIDs)
+    save_dataframes(combined_df, "eavs_combined_cleaned_all_geo", output_dir)
+
+    # Combined output is county-level only; non-county geographies (UOCAVA, sub-county GEOIDs)
+    # are preserved upstream but excluded from this validated artifact.
+    cleaned_df = cleaned_df.dropna(subset=["fips_code"])
+
+    # VALIDATE: Ensure fips_code is string before schema validation
     cleaned_df['fips_code'] = cleaned_df['fips_code'].astype(str)
     log.info(f"Starting per-year cleaning for years: {years}")
     
@@ -248,7 +301,7 @@ def main():
         schema.validate(cleaned_df)
         log.success("Data validation successful!")
         
-        # **NEW:** Save combined file in all formats
+        # LOAD: Save combined file in all formats
         save_dataframes(cleaned_df, 'eavs_combined_cleaned', output_dir)
 
     except pa.errors.SchemaError as e:

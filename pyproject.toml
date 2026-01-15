@@ -22,7 +22,8 @@ dependencies = [
     "openpyxl",
     "pyyaml",
     "streamlit",
-    "openpyxl"
+    "openpyxl",
+    "cenpy"
 ]
 
 [build-system]
