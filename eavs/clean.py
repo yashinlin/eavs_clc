@@ -102,6 +102,8 @@ def clean_data(year: int, config: List[Dict[str, Any]]) -> pd.DataFrame:
         log.warning(f"Raw EAVS file not found for year {year} within {raw_data_dir}")
         return pd.DataFrame()
         
+    assert len(excel_files) == 1
+
     data_path = excel_files[0]
     log.info(f"Cleaning data for {year} using file: {data_path.name}")
 

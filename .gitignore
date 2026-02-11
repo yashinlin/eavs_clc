@@ -1,7 +1,7 @@
-data/
-
 ## Python.gitignore
 # https://github.com/github/gitignore/blob/5445a270254a0b4443b20ed0033c4094959f937e/Python.gitignore
+
+data/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -148,6 +148,9 @@ venv.bak/
 
 # mkdocs documentation
 /site
+
+# temporary documentation
+/tmp
 
 # mypy
 .mypy_cache/
