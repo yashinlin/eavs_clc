@@ -240,7 +240,7 @@ columns:
   # -------------------------------
   # Permanent Mail Registrants (C2)
   # -------------------------------
-  - name: total_transmitted_permanent_mail
+  - name: transmitted_permanent_mail_total
     dtype: int64
     raw_name: C2a
     description: "Total mail ballots transmitted to permanent mail registrants."
