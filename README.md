@@ -66,8 +66,8 @@ uv sync
 ## EAVS dataset
 
 The **Election Administration and Voting Survey** data is collected every two years after the national elections. It is a large spreadsheet with ~400 columns and ~6000 rows.
-Each column is named with a letter, number, and letter, starting with `A1a`, `A1b` ... `C9a`, etc. In order to decode what the columns mean,
-the Data Codebook maps each column label to a description of the column data. To analyze and manipulate the dataset, we currently use pandas with calamine for fast excel I/O.
+Most EAVS variables use identifiers such as `A1a`, `C9b`, or `E3d`, corresponding to question numbers in the survey instrument. In order to decode what the columns mean,
+EAC produces codebooks (eg. 2024_EAVS_Codebook), which maps each column label to a description of the column data. To analyze and manipulate the dataset, we currently use pandas with calamine for fast excel I/O.
 
 ## Working with the data
 
@@ -89,7 +89,58 @@ Run:
 uv run -m eavs.clean
 ```
 
-This processes cleaned data with human-readable column names into `data/cleaned/`. The best file to work with would be [`data/cleaned/timeseries.parquet`](./data/cleaned/timeseries.parquet)
+This processes cleaned data with human-readable column names into `data/cleaned/`. The primary cleaned analytical dataset is currently (May 2026) planned to be [`data/cleaned/timeseries.parquet`](./data/cleaned/timeseries.parquet). This dataset aims to harmonise comparable variables across EAVS survey years where possible.
+
+## Column mappings
+
+The EAVS survey instrument can change from year to year, so the same substantive concept may not always use the same EAVS question identifier across survey years. For example, a concept that appeared under one question number in 2022 may be moved, renamed, split, or combined in 2024.
+
+To handle this, the cleaning pipeline uses year-specific YAML configuration files in:
+
+`eavs/assets/column_mappings/`
+
+The `clean.py` script loads the YAML file for each survey year and uses it to map raw EAVS question identifiers, such as `A1a`, `C9b`, or `E1d`, to consistent project variable names. This allows the cleaned datasets to preserve comparable variable names across years even when the underlying survey structure changes.
+
+Each YAML file should therefore be reviewed against the official EAVS survey instrument for that year before it is used in the pipeline. Mappings should not be copied forward from a prior year without checking whether the survey structure changed. Each YAML mapping contains: (1) the raw EAVS survey variable identifier (`raw_name`) (2) a harmonized project variable name (`name`) and (3) metadata such as datatype and description.
+
+The original CLC/Lata analytical variable list was a narrower subset of EAVS variables. The `2022.yaml` and updated 2024 mappings extend beyond that original subset to include additional related EAVS variables, especially for mail voting, curing, drop boxes, comments, and supplemental “other” fields.
+
+For 2024, Section A changed substantially. Rejected registration transactions, confirmation notices, and voter removals moved to different question numbers. The corrected 2024 mapping harmonizes these changes against the 2022-style project variable names where possible, while preserving longitudinal comparability.
+
+## Missing data
+
+The EAVS dataset uses several negative sentinel values to represent different forms of missing or non-applicable data:
+
+Code	Meaning
+-99	    Data not available
+-88	    Does not apply to jurisdiction
+-77	    Valid skip
+-66	    Item not included in EAVS survey year
+
+### Cleaning Strategy
+
+In the cleaned analytic datasets, these sentinel values are converted to null values (`NaN`/ `NA`) to ensure:
+* accurate arithmetic and percentage calculations
+* proper denominator handling
+* compatibility with statistical and visualization tools
+* prevention of accidental treatment as real numeric values
+
+Example:
+
+SPECIAL_CODE_MEANINGS = {
+    -99: "not_available",
+    -88: "not_applicable",
+    -77: "valid_skip",
+    -66: "not_in_year",
+}
+
+### Denominator Handling
+
+For dashboard calculations and rate estimation:
+-88, -77, and -66 are generally excluded from denominators
+-99 is treated as missing data and excluded from calculations, though completeness may be separately assessed
+
+This approach prioritizes computational safety while preserving interpretability and reproducibility.
 
 ## Notebooks
 Our Jupyter Notebooks are for exploratory data analysis and dashboard prototyping. Any finalized features should be converted into Python scripts for reproducible builds. Running Jupyter Notebooks requires jupyterlab (a dev dependency), as well as the relevant data in the `data/raw` directory. Reading the Jupyter Notebook should give you a good idea of what EAVS data files are required.

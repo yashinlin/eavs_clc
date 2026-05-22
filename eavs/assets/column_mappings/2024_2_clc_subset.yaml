@@ -1,0 +1,827 @@
+version: "1.0"
+year: 2024
+notes: >
+  Corrected 2024 EAVS mapping for the CLC-tracked variables and formulas.
+  Section A was restructured in 2024: rejected registration transactions are A3f/A8*,
+  confirmation notices are A10*, and voter removals are A12*.
+
+columns:
+  # -------------------------------
+  # Identifiers
+  # -------------------------------
+  - name: fips_code
+    dtype: string
+    raw_name: FIPSCode
+  - name: jurisdiction_name
+    dtype: string
+    raw_name: Jurisdiction_Name
+  - name: state
+    dtype: string
+    raw_name: State_Full
+  - name: state_abbr
+    dtype: string
+    raw_name: State_Abbr
+
+  # -------------------------------
+  # Registration totals
+  # -------------------------------
+  - name: registered_eligible_voters
+    dtype: int64
+    raw_name: A1a
+    description: Total registered and eligible voters
+  - name: active_voters
+    dtype: int64
+    raw_name: A1b
+    description: Active voters
+  - name: inactive_voters
+    dtype: float64
+    raw_name: A1c
+    description: Inactive voters
+
+  # -------------------------------
+  # Registration transactions
+  # -------------------------------
+  - name: total_registrations_received
+    dtype: int64
+    raw_name: A3a
+    description: Total registration transactions received
+  - name: new_valid_registrations
+    dtype: int64
+    raw_name: A3b
+    description: New valid registrations
+  - name: pre_registrations
+    dtype: int64
+    raw_name: A3c
+    description: Pre-registrations under age 18
+  - name: duplicate_registrations
+    dtype: int64
+    raw_name: A3d
+    description: Duplicate registrations
+  - name: registration_updates
+    dtype: int64
+    raw_name: A3e
+    description: Updates to existing valid registrations
+  - name: rejected_registrations
+    dtype: int64
+    raw_name: A3f
+    description: Invalid/rejected registration transactions
+
+  # -------------------------------
+  # Registration transactions by source
+  # -------------------------------
+  - name: total_forms_mail_fax_email
+    dtype: int64
+    raw_name: A4a
+    description: Total transactions — mail/fax/email
+  - name: new_registrations_mail_fax_email
+    dtype: int64
+    raw_name: A5a
+    description: New valid registrations — mail/fax/email
+  - name: duplicate_registrations_mail_fax_email
+    dtype: int64
+    raw_name: A6a
+    description: Duplicate registrations — mail/fax/email
+  - name: rejected_registrations_mail_fax_email
+    dtype: int64
+    raw_name: A8a
+    description: Invalid/rejected registrations — mail/fax/email
+
+  - name: total_forms_in_person
+    dtype: int64
+    raw_name: A4b
+    description: Total transactions — in person
+  - name: new_registrations_in_person
+    dtype: int64
+    raw_name: A5b
+    description: New valid registrations — in person
+  - name: duplicate_registrations_in_person
+    dtype: int64
+    raw_name: A6b
+    description: Duplicate registrations — in person
+  - name: rejected_registrations_in_person
+    dtype: int64
+    raw_name: A8b
+    description: Invalid/rejected registrations — in person
+
+  - name: total_forms_online
+    dtype: int64
+    raw_name: A4c
+    description: Total transactions — online registration
+  - name: new_registrations_online
+    dtype: int64
+    raw_name: A5c
+    description: New valid registrations — online registration
+  - name: duplicate_registrations_online
+    dtype: int64
+    raw_name: A6c
+    description: Duplicate registrations — online registration
+  - name: rejected_registrations_online
+    dtype: int64
+    raw_name: A8c
+    description: Invalid/rejected registrations — online registration
+
+  - name: total_forms_dmv
+    dtype: int64
+    raw_name: A4e
+    description: Total transactions — motor vehicle offices
+  - name: new_registrations_dmv
+    dtype: int64
+    raw_name: A5e
+    description: New valid registrations — motor vehicle offices
+  - name: duplicate_registrations_dmv
+    dtype: int64
+    raw_name: A6e
+    description: Duplicate registrations — motor vehicle offices
+  - name: rejected_registrations_dmv
+    dtype: int64
+    raw_name: A8e
+    description: Invalid/rejected registrations — motor vehicle offices
+
+  - name: total_forms_mandatory_nvra
+    dtype: int64
+    raw_name: A4f
+    description: Total transactions — NVRA public assistance offices
+  - name: new_registrations_mandatory_nvra
+    dtype: int64
+    raw_name: A5f
+    description: New valid registrations — NVRA public assistance offices
+  - name: duplicate_registrations_mandatory_nvra
+    dtype: int64
+    raw_name: A6f
+    description: Duplicate registrations — NVRA public assistance offices
+  - name: rejected_registrations_mandatory_nvra
+    dtype: int64
+    raw_name: A8f
+    description: Invalid/rejected registrations — NVRA public assistance offices
+
+  - name: total_forms_disability_agency
+    dtype: int64
+    raw_name: A4g
+    description: Total transactions — disability agencies
+  - name: new_registrations_disability_agency
+    dtype: int64
+    raw_name: A5g
+    description: New valid registrations — disability agencies
+  - name: duplicate_registrations_disability_agency
+    dtype: int64
+    raw_name: A6g
+    description: Duplicate registrations — disability agencies
+  - name: rejected_registrations_disability_agency
+    dtype: int64
+    raw_name: A8g
+    description: Invalid/rejected registrations — disability agencies
+
+  - name: total_forms_armed_forces
+    dtype: int64
+    raw_name: A4h
+    description: Total transactions — armed forces recruitment offices
+  - name: new_registrations_armed_forces
+    dtype: int64
+    raw_name: A5h
+    description: New valid registrations — armed forces recruitment offices
+  - name: duplicate_registrations_armed_forces
+    dtype: int64
+    raw_name: A6h
+    description: Duplicate registrations — armed forces recruitment offices
+  - name: rejected_registrations_armed_forces
+    dtype: int64
+    raw_name: A8h
+    description: Invalid/rejected registrations — armed forces recruitment offices
+
+  - name: total_forms_discretionary_nvra
+    dtype: int64
+    raw_name: A4i
+    description: Total transactions — other state-designated agencies
+  - name: new_registrations_discretionary_nvra
+    dtype: int64
+    raw_name: A5i
+    description: New valid registrations — other state-designated agencies
+  - name: duplicate_registrations_discretionary_nvra
+    dtype: int64
+    raw_name: A6i
+    description: Duplicate registrations — other state-designated agencies
+  - name: rejected_registrations_discretionary_nvra
+    dtype: int64
+    raw_name: A8i
+    description: Invalid/rejected registrations — other state-designated agencies
+
+  - name: total_forms_advocacy_groups
+    dtype: int64
+    raw_name: A4j
+    description: Total transactions — advocacy groups / political parties
+  - name: new_registrations_advocacy_groups
+    dtype: int64
+    raw_name: A5j
+    description: New valid registrations — advocacy groups / political parties
+  - name: duplicate_registrations_advocacy_groups
+    dtype: int64
+    raw_name: A6j
+    description: Duplicate registrations — advocacy groups / political parties
+  - name: rejected_registrations_advocacy_groups
+    dtype: int64
+    raw_name: A8j
+    description: Invalid/rejected registrations — advocacy groups / political parties
+
+  # -------------------------------
+  # Confirmation notices
+  # -------------------------------
+  - name: confirmation_notices_sent_total
+    dtype: int64
+    raw_name: A10a
+    description: Total confirmation notices sent
+  - name: confirmation_notices_undeliverable
+    dtype: int64
+    raw_name: A10e
+    description: Confirmation notices returned undeliverable
+  - name: confirmation_notices_status_unknown
+    dtype: int64
+    raw_name: A10f
+    description: Unreturned confirmation notices
+
+  # -------------------------------
+  # Voter registration removals
+  # -------------------------------
+  - name: voters_removed_total
+    dtype: int64
+    raw_name: A12a
+    description: Total voter registration records removed
+  - name: voters_removed_felony
+    dtype: int64
+    raw_name: A12d
+    description: Removed due to disqualifying conviction/incarceration
+  - name: voters_removed_nonresponse
+    dtype: int64
+    raw_name: A12e
+    description: Removed for failure to respond/failure to vote
+
+  # -------------------------------
+  # Mail voting
+  # -------------------------------
+  - name: mail_transmitted_total
+    dtype: int64
+    raw_name: C1a
+    description: Total mail ballots transmitted
+  - name: mail_returned_by_voters
+    dtype: int64
+    raw_name: C1b
+    description: Total mail ballots returned
+  - name: mail_ballots_counted
+    dtype: int64
+    raw_name: C8a
+    description: Total mail ballots returned and counted
+  - name: mail_ballots_rejected_total
+    dtype: int64
+    raw_name: C9a
+    description: Total mail ballots rejected
+  - name: mail_ballots_rejected_late
+    dtype: int64
+    raw_name: C9b
+    description: Rejected because late
+  - name: mail_ballots_rejected_missing_voter_signature
+    dtype: int64
+    raw_name: C9c
+    description: Rejected because no voter signature
+  - name: mail_ballots_rejected_missing_witness_signature
+    dtype: int64
+    raw_name: C9d
+    description: Rejected because no witness signature
+  - name: mail_ballots_rejected_non_matching_voter_signature
+    dtype: int64
+    raw_name: C9e
+    description: Rejected because non-matching or incomplete signature
+  - name: mail_ballots_rejected_unofficial_envelope
+    dtype: int64
+    raw_name: C9f
+    description: Rejected because unofficial envelope
+  - name: mail_ballots_rejected_ballot_missing_from_envelope
+    dtype: int64
+    raw_name: C9g
+    description: Rejected because ballot missing from envelope
+  - name: mail_ballots_rejected_multiple_ballots_one_envelope
+    dtype: int64
+    raw_name: C9i
+    description: Rejected because multiple ballots in one envelope
+  - name: mail_ballots_rejected_envelope_not_sealed
+    dtype: int64
+    raw_name: C9j
+    description: Rejected because envelope not sealed
+  - name: mail_ballots_rejected_no_resident_address
+    dtype: int64
+    raw_name: C9l
+    description: Rejected because no resident address on envelope
+  - name: mail_ballots_rejected_voter_deceased
+    dtype: int64
+    raw_name: C9m
+    description: Rejected because voter deceased
+  - name: mail_ballots_rejected_voter_already_voted
+    dtype: int64
+    raw_name: C9n
+    description: Rejected because voter already voted
+  - name: mail_ballots_rejected_missing_documentation
+    dtype: int64
+    raw_name: C9o
+    description: Rejected because missing required documentation
+  - name: mail_ballots_rejected_no_ballot_application
+    dtype: int64
+    raw_name: C9q
+    description: Rejected because no ballot application on record
+  - name: mail_ballots_rejected_other_1
+    dtype: int64
+    raw_name: C9r
+    description: Rejected for other reason 1
+  - name: mail_ballots_rejected_other_2
+    dtype: int64
+    raw_name: C9s
+    description: Rejected for other reason 2
+  - name: mail_ballots_rejected_other_3
+    dtype: int64
+    raw_name: C9t
+    description: Rejected for other reason 3
+
+  # -------------------------------
+  # Provisional ballots
+  # -------------------------------
+  - name: provisional_ballots_cast_total
+    dtype: int64
+    raw_name: E1a
+    description: Total provisional ballots submitted
+  - name: provisional_ballots_fully_counted
+    dtype: int64
+    raw_name: E1b
+    description: Provisional ballots counted in full
+  - name: provisional_ballots_partially_counted
+    dtype: int64
+    raw_name: E1c
+    description: Provisional ballots counted in part
+  - name: provisional_ballots_rejected_total
+    dtype: int64
+    raw_name: E1d
+    description: Provisional ballots rejected
+
+  - name: provisional_ballots_cast_voter_not_on_list
+    dtype: int64
+    raw_name: E2a
+    description: Voter not on eligible voter list
+  - name: provisional_ballots_cast_voter_lacked_id
+    dtype: int64
+    raw_name: E2b
+    description: Voter lacked proper ID
+  - name: provisional_ballots_cast_challenged_by_official
+    dtype: int64
+    raw_name: E2c
+    description: Election official asserted voter ineligible
+  - name: provisional_ballots_cast_challenged_by_other
+    dtype: int64
+    raw_name: E2d
+    description: Third-party challenge unresolved
+  - name: provisional_ballots_cast_voter_not_resident
+    dtype: int64
+    raw_name: E2e
+    description: Wrong precinct residence
+  - name: provisional_ballots_cast_registration_not_updated
+    dtype: int64
+    raw_name: E2f
+    description: Registration not updated
+  - name: provisional_ballots_cast_voter_did_not_surrender_mail
+    dtype: int64
+    raw_name: E2g
+    description: Mail ballot not surrendered
+  - name: provisional_ballots_cast_judge_extended_hours
+    dtype: int64
+    raw_name: E2h
+    description: Court-extended polling hours
+  - name: provisional_ballots_cast_voter_used_sdr
+    dtype: int64
+    raw_name: E2i
+    description: Same-day registration voter
+
+  - name: provisional_ballots_rejected_not_registered
+    dtype: int64
+    raw_name: E3b
+    description: Voter not registered in state
+  - name: provisional_ballots_rejected_wrong_jurisdiction
+    dtype: int64
+    raw_name: E3c
+    description: Wrong jurisdiction
+  - name: provisional_ballots_rejected_wrong_precinct
+    dtype: int64
+    raw_name: E3d
+    description: Wrong precinct
+  - name: provisional_ballots_rejected_no_id
+    dtype: int64
+    raw_name: E3e
+    description: Insufficient ID
+  - name: provisional_ballots_rejected_incomplete
+    dtype: int64
+    raw_name: E3f
+    description: Incomplete/illegible ballot
+  - name: provisional_ballots_rejected_ballot_missing
+    dtype: int64
+    raw_name: E3g
+    description: Ballot missing from envelope
+  - name: provisional_ballots_rejected_no_signature
+    dtype: int64
+    raw_name: E3h
+    description: Missing signature
+  - name: provisional_ballots_rejected_non_matching_signature
+    dtype: int64
+    raw_name: E3i
+    description: Non-matching signature
+  - name: provisional_ballots_rejected_already_voted
+    dtype: int64
+    raw_name: E3j
+    description: Voter already voted
+
+derived_columns:
+  # -------------------------------
+  # Registration totals
+  # -------------------------------
+  - name: pct_inactive_voters
+    dtype: float64
+    formula: inactive_voters / registered_eligible_voters
+    raw_formula: A1c/A1a
+    description: Percent inactive voters
+
+  # -------------------------------
+  # Registration transaction rejection rates
+  # -------------------------------
+  - name: pct_rejected_total_registration_transactions
+    dtype: float64
+    formula: rejected_registrations / total_registrations_received
+    raw_formula: A3f/A3a
+    description: Percent rejected of total registration transactions
+  - name: pct_rejected_accepted_plus_rejected_registrations
+    dtype: float64
+    formula: rejected_registrations / (rejected_registrations + new_valid_registrations)
+    raw_formula: A3f/(A3f+A3b)
+    description: Percent rejected relative to accepted + rejected registrations
+
+  - name: pct_rejected_total_transactions_mail_fax_email
+    dtype: float64
+    formula: rejected_registrations_mail_fax_email / total_forms_mail_fax_email
+    raw_formula: A8a/A4a
+    description: Percent rejected of total transactions — mail/fax/email
+  - name: pct_rejected_accepted_plus_rejected_mail_fax_email
+    dtype: float64
+    formula: rejected_registrations_mail_fax_email / (rejected_registrations_mail_fax_email + new_registrations_mail_fax_email)
+    raw_formula: A8a/(A8a+A5a)
+    description: Percent rejected relative to accepted + rejected registrations — mail/fax/email
+
+  - name: pct_rejected_total_transactions_in_person
+    dtype: float64
+    formula: rejected_registrations_in_person / total_forms_in_person
+    raw_formula: A8b/A4b
+    description: Percent rejected of total transactions — in person
+  - name: pct_rejected_accepted_plus_rejected_in_person
+    dtype: float64
+    formula: rejected_registrations_in_person / (rejected_registrations_in_person + new_registrations_in_person)
+    raw_formula: A8b/(A8b+A5b)
+    description: Percent rejected relative to accepted + rejected registrations — in person
+
+  - name: pct_rejected_total_transactions_online
+    dtype: float64
+    formula: rejected_registrations_online / total_forms_online
+    raw_formula: A8c/A4c
+    description: Percent rejected of total transactions — online registration
+  - name: pct_rejected_accepted_plus_rejected_online
+    dtype: float64
+    formula: rejected_registrations_online / (rejected_registrations_online + new_registrations_online)
+    raw_formula: A8c/(A8c+A5c)
+    description: Percent rejected relative to accepted + rejected registrations — online registration
+
+  - name: pct_rejected_total_transactions_dmv
+    dtype: float64
+    formula: rejected_registrations_dmv / total_forms_dmv
+    raw_formula: A8e/A4e
+    description: Percent rejected of total transactions — motor vehicle offices
+  - name: pct_rejected_accepted_plus_rejected_dmv
+    dtype: float64
+    formula: rejected_registrations_dmv / (rejected_registrations_dmv + new_registrations_dmv)
+    raw_formula: A8e/(A8e+A5e)
+    description: Percent rejected relative to accepted + rejected registrations — motor vehicle offices
+
+  - name: pct_rejected_total_transactions_mandatory_nvra
+    dtype: float64
+    formula: rejected_registrations_mandatory_nvra / total_forms_mandatory_nvra
+    raw_formula: A8f/A4f
+    description: Percent rejected of total transactions — NVRA public assistance offices
+  - name: pct_rejected_accepted_plus_rejected_mandatory_nvra
+    dtype: float64
+    formula: rejected_registrations_mandatory_nvra / (rejected_registrations_mandatory_nvra + new_registrations_mandatory_nvra)
+    raw_formula: A8f/(A8f+A5f)
+    description: Percent rejected relative to accepted + rejected registrations — NVRA public assistance offices
+
+  - name: pct_rejected_total_transactions_disability_agency
+    dtype: float64
+    formula: rejected_registrations_disability_agency / total_forms_disability_agency
+    raw_formula: A8g/A4g
+    description: Percent rejected of total transactions — disability agencies
+  - name: pct_rejected_accepted_plus_rejected_disability_agency
+    dtype: float64
+    formula: rejected_registrations_disability_agency / (rejected_registrations_disability_agency + new_registrations_disability_agency)
+    raw_formula: A8g/(A8g+A5g)
+    description: Percent rejected relative to accepted + rejected registrations — disability agencies
+
+  - name: pct_rejected_total_transactions_armed_forces
+    dtype: float64
+    formula: rejected_registrations_armed_forces / total_forms_armed_forces
+    raw_formula: A8h/A4h
+    description: Percent rejected of total transactions — armed forces recruitment offices
+  - name: pct_rejected_accepted_plus_rejected_armed_forces
+    dtype: float64
+    formula: rejected_registrations_armed_forces / (rejected_registrations_armed_forces + new_registrations_armed_forces)
+    raw_formula: A8h/(A8h+A5h)
+    description: Percent rejected relative to accepted + rejected registrations — armed forces recruitment offices
+
+  - name: pct_rejected_total_transactions_discretionary_nvra
+    dtype: float64
+    formula: rejected_registrations_discretionary_nvra / total_forms_discretionary_nvra
+    raw_formula: A8i/A4i
+    description: Percent rejected of total transactions — other state-designated agencies
+  - name: pct_rejected_accepted_plus_rejected_discretionary_nvra
+    dtype: float64
+    formula: rejected_registrations_discretionary_nvra / (rejected_registrations_discretionary_nvra + new_registrations_discretionary_nvra)
+    raw_formula: A8i/(A8i+A5i)
+    description: Percent rejected relative to accepted + rejected registrations — other state-designated agencies
+
+  - name: pct_rejected_total_transactions_advocacy_groups
+    dtype: float64
+    formula: rejected_registrations_advocacy_groups / total_forms_advocacy_groups
+    raw_formula: A8j/A4j
+    description: Percent rejected of total transactions — advocacy groups / political parties
+  - name: pct_rejected_accepted_plus_rejected_advocacy_groups
+    dtype: float64
+    formula: rejected_registrations_advocacy_groups / (rejected_registrations_advocacy_groups + new_registrations_advocacy_groups)
+    raw_formula: A8j/(A8j+A5j)
+    description: Percent rejected relative to accepted + rejected registrations — advocacy groups / political parties
+
+  # -------------------------------
+  # Confirmation notices
+  # -------------------------------
+  - name: pct_unreturned_confirmation_notices
+    dtype: float64
+    formula: confirmation_notices_status_unknown / confirmation_notices_sent_total
+    raw_formula: A10f/A10a
+    description: Percent unreturned confirmation notices
+
+  # -------------------------------
+  # Voter registration removals
+  # -------------------------------
+  - name: pct_registered_voters_removed
+    dtype: float64
+    formula: voters_removed_total / (registered_eligible_voters + voters_removed_total)
+    raw_formula: A12a/(A1a+A12a)
+    description: Percent of registered voters removed
+  - name: pct_registered_voters_removed_disqualifying_conviction
+    dtype: float64
+    formula: voters_removed_felony / (registered_eligible_voters + voters_removed_total)
+    raw_formula: A12d/(A1a+A12a)
+    description: Percent removed due to disqualifying conviction
+  - name: pct_removals_disqualifying_conviction
+    dtype: float64
+    formula: voters_removed_felony / voters_removed_total
+    raw_formula: A12d/A12a
+    description: Percent of removals due to disqualifying conviction
+  - name: pct_registered_voters_removed_inactivity_nonresponse
+    dtype: float64
+    formula: voters_removed_nonresponse / (registered_eligible_voters + voters_removed_total)
+    raw_formula: A12e/(A1a+A12a)
+    description: Percent removed due to inactivity/nonresponse
+  - name: pct_removals_inactivity_nonresponse
+    dtype: float64
+    formula: voters_removed_nonresponse / voters_removed_total
+    raw_formula: A12e/A12a
+    description: Percent of removals due to inactivity/nonresponse
+
+  # -------------------------------
+  # Provisional ballots
+  # -------------------------------
+  - name: pct_provisional_ballots_counted_full
+    dtype: float64
+    formula: provisional_ballots_fully_counted / provisional_ballots_cast_total
+    raw_formula: E1b/E1a
+    description: Percent provisional ballots counted in full
+  - name: pct_provisional_ballots_counted_part
+    dtype: float64
+    formula: provisional_ballots_partially_counted / provisional_ballots_cast_total
+    raw_formula: E1c/E1a
+    description: Percent provisional ballots counted in part
+  - name: pct_provisional_ballots_rejected
+    dtype: float64
+    formula: provisional_ballots_rejected_total / provisional_ballots_cast_total
+    raw_formula: E1d/E1a
+    description: Percent provisional ballots rejected
+
+  - name: pct_provisional_rejected_not_registered
+    dtype: float64
+    formula: provisional_ballots_rejected_not_registered / provisional_ballots_cast_total
+    raw_formula: E3b/E1a
+    description: Percent rejected because voter not registered
+  - name: pct_provisional_rejected_wrong_jurisdiction
+    dtype: float64
+    formula: provisional_ballots_rejected_wrong_jurisdiction / provisional_ballots_cast_total
+    raw_formula: E3c/E1a
+    description: Percent rejected because wrong jurisdiction
+  - name: pct_provisional_rejected_wrong_precinct
+    dtype: float64
+    formula: provisional_ballots_rejected_wrong_precinct / provisional_ballots_cast_total
+    raw_formula: E3d/E1a
+    description: Percent rejected because wrong precinct
+  - name: pct_provisional_rejected_insufficient_id
+    dtype: float64
+    formula: provisional_ballots_rejected_no_id / provisional_ballots_cast_total
+    raw_formula: E3e/E1a
+    description: Percent rejected because insufficient ID
+  - name: pct_provisional_rejected_incomplete_illegible
+    dtype: float64
+    formula: provisional_ballots_rejected_incomplete / provisional_ballots_cast_total
+    raw_formula: E3f/E1a
+    description: Percent rejected because incomplete/illegible ballot
+  - name: pct_provisional_rejected_ballot_missing
+    dtype: float64
+    formula: provisional_ballots_rejected_ballot_missing / provisional_ballots_cast_total
+    raw_formula: E3g/E1a
+    description: Percent rejected because ballot missing from envelope
+  - name: pct_provisional_rejected_missing_signature
+    dtype: float64
+    formula: provisional_ballots_rejected_no_signature / provisional_ballots_cast_total
+    raw_formula: E3h/E1a
+    description: Percent rejected because missing signature
+  - name: pct_provisional_rejected_non_matching_signature
+    dtype: float64
+    formula: provisional_ballots_rejected_non_matching_signature / provisional_ballots_cast_total
+    raw_formula: E3i/E1a
+    description: Percent rejected because non-matching signature
+  - name: pct_provisional_rejected_voter_already_voted
+    dtype: float64
+    formula: provisional_ballots_rejected_already_voted / provisional_ballots_cast_total
+    raw_formula: E3j/E1a
+    description: Percent rejected because voter already voted
+
+  # -------------------------------
+  # Mail voting
+  # -------------------------------
+  - name: pct_mail_ballots_rejected_of_transmitted
+    dtype: float64
+    formula: mail_ballots_rejected_total / mail_transmitted_total
+    raw_formula: C9a/C1a
+    description: Percent transmitted mail ballots rejected
+
+  - name: pct_mail_rejections_late
+    dtype: float64
+    formula: mail_ballots_rejected_late / mail_ballots_rejected_total
+    raw_formula: C9b/C9a
+    description: Percent of rejections because late
+  - name: pct_mail_returned_rejected_late
+    dtype: float64
+    formula: mail_ballots_rejected_late / mail_returned_by_voters
+    raw_formula: C9b/C1b
+    description: Percent of returned ballots rejected because late
+
+  - name: pct_mail_rejections_missing_voter_signature
+    dtype: float64
+    formula: mail_ballots_rejected_missing_voter_signature / mail_ballots_rejected_total
+    raw_formula: C9c/C9a
+    description: Percent of rejections because no voter signature
+  - name: pct_mail_returned_rejected_missing_voter_signature
+    dtype: float64
+    formula: mail_ballots_rejected_missing_voter_signature / mail_returned_by_voters
+    raw_formula: C9c/C1b
+    description: Percent of returned ballots rejected because no voter signature
+
+  - name: pct_mail_rejections_missing_witness_signature
+    dtype: float64
+    formula: mail_ballots_rejected_missing_witness_signature / mail_ballots_rejected_total
+    raw_formula: C9d/C9a
+    description: Percent of rejections because no witness signature
+  - name: pct_mail_returned_rejected_missing_witness_signature
+    dtype: float64
+    formula: mail_ballots_rejected_missing_witness_signature / mail_returned_by_voters
+    raw_formula: C9d/C1b
+    description: Percent of returned ballots rejected because no witness signature
+
+  - name: pct_mail_rejections_non_matching_signature
+    dtype: float64
+    formula: mail_ballots_rejected_non_matching_voter_signature / mail_ballots_rejected_total
+    raw_formula: C9e/C9a
+    description: Percent of rejections because non-matching signature
+  - name: pct_mail_returned_rejected_non_matching_signature
+    dtype: float64
+    formula: mail_ballots_rejected_non_matching_voter_signature / mail_returned_by_voters
+    raw_formula: C9e/C1b
+    description: Percent of returned ballots rejected because non-matching signature
+
+  - name: pct_mail_rejections_unofficial_envelope
+    dtype: float64
+    formula: mail_ballots_rejected_unofficial_envelope / mail_ballots_rejected_total
+    raw_formula: C9f/C9a
+    description: Percent of rejections because unofficial envelope
+  - name: pct_mail_returned_rejected_unofficial_envelope
+    dtype: float64
+    formula: mail_ballots_rejected_unofficial_envelope / mail_returned_by_voters
+    raw_formula: C9f/C1b
+    description: Percent of returned ballots rejected because unofficial envelope
+
+  - name: pct_mail_rejections_ballot_missing_from_envelope
+    dtype: float64
+    formula: mail_ballots_rejected_ballot_missing_from_envelope / mail_ballots_rejected_total
+    raw_formula: C9g/C9a
+    description: Percent of rejections because ballot missing from envelope
+  - name: pct_mail_returned_rejected_ballot_missing_from_envelope
+    dtype: float64
+    formula: mail_ballots_rejected_ballot_missing_from_envelope / mail_returned_by_voters
+    raw_formula: C9g/C1b
+    description: Percent of returned ballots rejected because ballot missing from envelope
+
+  - name: pct_mail_rejections_multiple_ballots_one_envelope
+    dtype: float64
+    formula: mail_ballots_rejected_multiple_ballots_one_envelope / mail_ballots_rejected_total
+    raw_formula: C9i/C9a
+    description: Percent of rejections because multiple ballots in one envelope
+  - name: pct_mail_returned_rejected_multiple_ballots_one_envelope
+    dtype: float64
+    formula: mail_ballots_rejected_multiple_ballots_one_envelope / mail_returned_by_voters
+    raw_formula: C9i/C1b
+    description: Percent of returned ballots rejected because multiple ballots in one envelope
+
+  - name: pct_mail_rejections_envelope_not_sealed
+    dtype: float64
+    formula: mail_ballots_rejected_envelope_not_sealed / mail_ballots_rejected_total
+    raw_formula: C9j/C9a
+    description: Percent of rejections because envelope not sealed
+  - name: pct_mail_returned_rejected_envelope_not_sealed
+    dtype: float64
+    formula: mail_ballots_rejected_envelope_not_sealed / mail_returned_by_voters
+    raw_formula: C9j/C1b
+    description: Percent of returned ballots rejected because envelope not sealed
+
+  - name: pct_mail_rejections_no_resident_address
+    dtype: float64
+    formula: mail_ballots_rejected_no_resident_address / mail_ballots_rejected_total
+    raw_formula: C9l/C9a
+    description: Percent of rejections because no resident address
+  - name: pct_mail_returned_rejected_no_resident_address
+    dtype: float64
+    formula: mail_ballots_rejected_no_resident_address / mail_returned_by_voters
+    raw_formula: C9l/C1b
+    description: Percent of returned ballots rejected because no resident address
+
+  - name: pct_mail_rejections_voter_deceased
+    dtype: float64
+    formula: mail_ballots_rejected_voter_deceased / mail_ballots_rejected_total
+    raw_formula: C9m/C9a
+    description: Percent of rejections because voter deceased
+  - name: pct_mail_returned_rejected_voter_deceased
+    dtype: float64
+    formula: mail_ballots_rejected_voter_deceased / mail_returned_by_voters
+    raw_formula: C9m/C1b
+    description: Percent of returned ballots rejected because voter deceased
+
+  - name: pct_mail_rejections_voter_already_voted
+    dtype: float64
+    formula: mail_ballots_rejected_voter_already_voted / mail_ballots_rejected_total
+    raw_formula: C9n/C9a
+    description: Percent of rejections because voter already voted
+  - name: pct_mail_returned_rejected_voter_already_voted
+    dtype: float64
+    formula: mail_ballots_rejected_voter_already_voted / mail_returned_by_voters
+    raw_formula: C9n/C1b
+    description: Percent of returned ballots rejected because voter already voted
+
+  - name: pct_mail_rejections_missing_documentation
+    dtype: float64
+    formula: mail_ballots_rejected_missing_documentation / mail_ballots_rejected_total
+    raw_formula: C9o/C9a
+    description: Percent of rejections because missing documentation
+  - name: pct_mail_returned_rejected_missing_documentation
+    dtype: float64
+    formula: mail_ballots_rejected_missing_documentation / mail_returned_by_voters
+    raw_formula: C9o/C1b
+    description: Percent of returned ballots rejected because missing documentation
+
+  - name: pct_mail_rejections_no_ballot_application
+    dtype: float64
+    formula: mail_ballots_rejected_no_ballot_application / mail_ballots_rejected_total
+    raw_formula: C9q/C9a
+    description: Percent of rejections because no ballot application on record
+  - name: pct_mail_returned_rejected_no_ballot_application
+    dtype: float64
+    formula: mail_ballots_rejected_no_ballot_application / mail_returned_by_voters
+    raw_formula: C9q/C1b
+    description: Percent of returned ballots rejected because no ballot application on record
+
+  - name: mail_ballots_rejected_other_total
+    dtype: int64
+    formula: mail_ballots_rejected_other_1 + mail_ballots_rejected_other_2 + mail_ballots_rejected_other_3
+    raw_formula: C9r+C9s+C9t
+    description: Total rejected for other reasons
+  - name: pct_mail_rejections_other
+    dtype: float64
+    formula: mail_ballots_rejected_other_total / mail_ballots_rejected_total
+    raw_formula: (C9r+C9s+C9t)/C9a
+    description: Percent rejected for other reasons
+  - name: pct_mail_returned_rejected_other
+    dtype: float64
+    formula: mail_ballots_rejected_other_total / mail_returned_by_voters
+    raw_formula: (C9r+C9s+C9t)/C1b
+    description: Percent of returned ballots rejected for other reasons
