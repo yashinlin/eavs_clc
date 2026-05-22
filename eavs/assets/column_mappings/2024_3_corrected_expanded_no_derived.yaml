@@ -30,20 +30,21 @@
 # - intra/inter-jurisdiction updates were collapsed into A3e
 # -----------------------------------------------------------------------------
 
-version: '1.1'
-year: 2026
-notes:
-- 'Corrected 2024 EAVS mapping for the CLC-tracked variables and formulas. Section A was restructured in 2024: rejected registration
-  transactions are A3f/A8*, confirmation notices are A10*, and voter removals are A12*.
+# version: '1.1'
+# year: 2026
+# notes:
+# - 'Corrected 2024 EAVS mapping for the CLC-tracked variables and formulas. Section A was restructured in 2024: rejected registration
+#   transactions are A3f/A8*, confirmation notices are A10*, and voter removals are A12*.
 
-- Expanded from 2024_corrected.yaml by adding valid related 2024 fields present in 2024.yaml but absent from the CLC-focused
-  subset, especially mail ballot drop box, curing, comment/text, and additional C9 rejection categories.
-- Does not include separate 2022-style intrajurisdiction_registration_updates and interjurisdiction_registration_updates fields
-  because the 2024 survey combines these concepts into A3e (registration_updates).
-- Does not include voters_removed_total_2020_2022 because the corresponding 2024 concept is voters_removed_total mapped to
-  A12a.
-- Derived/formula variables are intentionally excluded from this mapping file; dashboard rates are calculated outside the
-  YAML.
+# - Expanded from 2024_corrected.yaml by adding valid related 2024 fields present in 2024.yaml but absent from the CLC-focused
+#   subset, especially mail ballot drop box, curing, comment/text, and additional C9 rejection categories.
+# - Does not include separate 2022-style intrajurisdiction_registration_updates and interjurisdiction_registration_updates fields
+#   because the 2024 survey combines these concepts into A3e (registration_updates).
+# - Does not include voters_removed_total_2020_2022 because the corresponding 2024 concept is voters_removed_total mapped to
+#   A12a.
+# - Derived/formula variables are intentionally excluded from this mapping file; dashboard rates are calculated outside the
+#   YAML.
+
 columns:
 - name: fips_code
   dtype: string
