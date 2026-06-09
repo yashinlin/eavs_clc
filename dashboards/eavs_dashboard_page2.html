@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EAVS Voter Process Integrity — Page 2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #0f1117;
+      --surf:    #1a1d2e;
+      --surf-hi: #21263a;
+      --bdr:     #2d3154;
+      --txt:     #dde1ee;
+      --mut:     #8892b0;
+      --blue:    #4f8ef7;
+      --red:     #f76c5e;
+      --green:   #56d364;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--txt); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; font-size: 14px; }
+
+    /* ── Header ── */
+    .hdr { padding: 18px 24px 14px; border-bottom: 1px solid var(--bdr); }
+    .hdr h1 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+    .hdr p  { font-size: 12px; color: var(--mut); margin-top: 3px; }
+
+    /* ── Controls ── */
+    .ctrl { padding: 10px 24px; display: flex; gap: 20px; align-items: center;
+            flex-wrap: wrap; border-bottom: 1px solid var(--bdr); background: var(--surf); }
+    .tg  { display: flex; align-items: center; gap: 4px; }
+    .tg-lbl { font-size: 11px; color: var(--mut); text-transform: uppercase;
+              letter-spacing: .07em; margin-right: 2px; white-space: nowrap; }
+    button.tb { background: transparent; border: 1px solid var(--bdr); color: var(--mut);
+                border-radius: 5px; padding: 4px 11px; font-size: 12px; font-family: inherit;
+                cursor: pointer; transition: all .12s; line-height: 1.5; white-space: nowrap; }
+    button.tb:hover { border-color: var(--blue); color: var(--txt); }
+    button.tb.on  { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+
+    /* ── Legend ── */
+    .lgnd { padding: 8px 24px; display: flex; gap: 14px; flex-wrap: wrap;
+            border-bottom: 1px solid var(--bdr); }
+    .li { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--mut); }
+    .sw { width: 14px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    /* ── Heatmap grid ── */
+    .grid-wrap { padding: 14px 24px 6px; }
+    #state-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(68px, 1fr)); gap: 6px; }
+    .tile { border-radius: 6px; padding: 8px 4px 6px; cursor: pointer; text-align: center;
+            transition: filter .1s; user-select: none; }
+    .tile:hover { filter: brightness(1.2); }
+    .tile-abbr { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.2; }
+    .tile-val  { font-size: 11px; color: rgba(255,255,255,0.85); margin-top: 1px; }
+
+    /* ── Detail panel ── */
+    #detail { display: none; border-top: 1px solid var(--bdr); padding: 16px 24px 20px;
+              background: var(--surf); }
+    .det-hdr { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+    .det-title { font-size: 16px; font-weight: 700; }
+    .det-close { background: none; border: 1px solid var(--bdr); color: var(--mut); border-radius: 4px;
+                 padding: 2px 8px; font-size: 12px; font-family: inherit; cursor: pointer; }
+    .det-close:hover { border-color: var(--red); color: var(--red); }
+    .det-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 820px) { .det-body { grid-template-columns: 1fr; } }
+    .det-lbl { font-size: 10px; color: var(--mut); text-transform: uppercase;
+               letter-spacing: .07em; margin-bottom: 8px; }
+    .dtbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dtbl th { text-align: left; color: var(--mut); font-size: 10px; font-weight: 500;
+               text-transform: uppercase; letter-spacing: .06em;
+               border-bottom: 1px solid var(--bdr); padding: 4px 8px 6px; }
+    .dtbl td { padding: 7px 8px; border-bottom: 1px solid var(--bdr); vertical-align: middle; }
+    #det-bars svg { display: block; width: 100%; height: auto; }
+
+    /* ── Footnote ── */
+    .footnote { padding: 10px 24px 20px; font-size: 11px; color: var(--mut);
+                border-top: 1px solid var(--bdr); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>Voter Process Integrity Dashboard — Page 2</h1>
+  <p>Registration rejection, voter purge, mail ballot rejection, and provisional ballot rejection rates · Source: EAVS</p>
+</div>
+
+<div class="ctrl">
+  <div class="tg">
+    <span class="tg-lbl">Metric</span>
+    <button class="tb on" id="mb-reg_rejection_rate"         onclick="setMetric('reg_rejection_rate')">Reg. Rejection</button>
+    <button class="tb"    id="mb-purge_rate"                 onclick="setMetric('purge_rate')">Purge Rate</button>
+    <button class="tb"    id="mb-mail_rejection_rate"        onclick="setMetric('mail_rejection_rate')">Mail Ballot Rejection</button>
+    <button class="tb"    id="mb-provisional_rejection_rate" onclick="setMetric('provisional_rejection_rate')">Provisional Rejection</button>
+  </div>
+  <div class="tg">
+    <span class="tg-lbl">Year</span>
+    <button class="tb on" id="yb-2022" onclick="setYear(2022)">2022</button>
+    <button class="tb"    id="yb-2020" onclick="setYear(2020)">2020</button>
+  </div>
+</div>
+
+<div class="lgnd">
+  <div class="li"><div class="sw" style="background:#2dc4b2"></div>Low (below avg)</div>
+  <div class="li"><div class="sw" style="background:#f0a500"></div>Moderate (up to 2× avg)</div>
+  <div class="li"><div class="sw" style="background:#e07040"></div>High (2–4× avg)</div>
+  <div class="li"><div class="sw" style="background:#cc3333"></div>Very high (&gt;4× avg)</div>
+  <div class="li"><div class="sw" style="background:#2d3154;border:1px solid #3d4268"></div>Not reported</div>
+</div>
+
+<div class="grid-wrap">
+  <div id="state-grid"></div>
+</div>
+
+<div id="detail">
+  <div class="det-hdr">
+    <div class="det-title" id="det-title"></div>
+    <button class="det-close" onclick="closeDetail()">✕ close</button>
+  </div>
+  <div class="det-body">
+    <div>
+      <div class="det-lbl">Rates vs. National Average</div>
+      <div id="det-table"></div>
+    </div>
+    <div>
+      <div class="det-lbl">2020 → 2022 Change</div>
+      <div id="det-bars"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footnote">
+  <strong>Notes:</strong> Sentinel values (−88, −99) reported by jurisdictions that do not collect or were unable to report this data were treated as "not reported" and excluded from rate calculations.
+  States where all jurisdictions reported sentinels show no rate.
+  Pennsylvania and several other states show elevated registration rejection rates because DMV automatic voter registration systems may count incomplete or duplicate form submissions as rejections.
+</div>
+
+<script>
+const DATA = [{"state":"Alabama","abbr":"AL","year":2020,"reg_rejection_rate":0.005209950804558412,"purge_rate":0.036730613120992586,"mail_rejection_rate":null,"provisional_rejection_rate":0.41763976776045403,"reg_class":"Low","purge_class":"Low","mail_class":"Not reported","prov_class":"Low"},{"state":"Alabama","abbr":"AL","year":2022,"reg_rejection_rate":0.0043647103190689795,"purge_rate":0.08085112029635175,"mail_rejection_rate":null,"provisional_rejection_rate":0.3746345029239766,"reg_class":"Low","purge_class":"Low","mail_class":"Not reported","prov_class":"Low"},{"state":"Alaska","abbr":"AK","year":2020,"reg_rejection_rate":0.008666293484385659,"purge_rate":0.08223583911294505,"mail_rejection_rate":0.0066054404996712685,"provisional_rejection_rate":0.020343888321416412,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Alaska","abbr":"AK","year":2022,"reg_rejection_rate":0.008872694474709078,"purge_rate":0.0719847716518442,"mail_rejection_rate":0.013654017803295298,"provisional_rejection_rate":0.09935097353969047,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"American Saomoa","abbr":"AS","year":2020,"reg_rejection_rate":0.1636785488293609,"purge_rate":0.1299798053974665,"mail_rejection_rate":0.006586169045005488,"provisional_rejection_rate":0.0,"reg_class":"Very high","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"American Saomoa","abbr":"AS","year":2022,"reg_rejection_rate":null,"purge_rate":0.19114153975129244,"mail_rejection_rate":null,"provisional_rejection_rate":null,"reg_class":"Not reported","purge_class":"High","mail_class":"Not reported","prov_class":"Not reported"},{"state":"Arizona","abbr":"AZ","year":2020,"reg_rejection_rate":0.018267039866447114,"purge_rate":0.07420323854631947,"mail_rejection_rate":0.002630919910061465,"provisional_rejection_rate":0.40076722784281765,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Arizona","abbr":"AZ","year":2022,"reg_rejection_rate":0.0173046686944599,"purge_rate":0.0894855539646939,"mail_rejection_rate":0.004255321175544976,"provisional_rejection_rate":0.532258064516129,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Arkansas","abbr":"AR","year":2020,"reg_rejection_rate":0.00017058380962128598,"purge_rate":0.09573804721379219,"mail_rejection_rate":0.06431882948407129,"provisional_rejection_rate":0.23651942679864085,"reg_class":"Low","purge_class":"Moderate","mail_class":"Very high","prov_class":"Low"},{"state":"Arkansas","abbr":"AR","year":2022,"reg_rejection_rate":0.01543591619035096,"purge_rate":0.10831625388959988,"mail_rejection_rate":0.06755639541750325,"provisional_rejection_rate":0.680965909090909,"reg_class":"Low","purge_class":"Moderate","mail_class":"High","prov_class":"Moderate"},{"state":"California","abbr":"CA","year":2020,"reg_rejection_rate":0.04886665899198885,"purge_rate":0.06254342903420557,"mail_rejection_rate":0.006034447993538249,"provisional_rejection_rate":0.0870059946714032,"reg_class":"Moderate","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"California","abbr":"CA","year":2022,"reg_rejection_rate":0.0275445789324563,"purge_rate":0.036291058316271094,"mail_rejection_rate":0.024359796092823845,"provisional_rejection_rate":0.07444730354183787,"reg_class":"Moderate","purge_class":"Low","mail_class":"Moderate","prov_class":"Low"},{"state":"Colorado","abbr":"CO","year":2020,"reg_rejection_rate":0.004602002234024207,"purge_rate":0.0989709673068777,"mail_rejection_rate":0.00945926903319199,"provisional_rejection_rate":0.5614035087719298,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Colorado","abbr":"CO","year":2022,"reg_rejection_rate":0.005530440430260772,"purge_rate":0.09059874033984285,"mail_rejection_rate":0.010301518698700114,"provisional_rejection_rate":0.5221238938053098,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Connecticut","abbr":"CT","year":2020,"reg_rejection_rate":null,"purge_rate":0.02125069859314925,"mail_rejection_rate":0.009639426679665648,"provisional_rejection_rate":0.44086021505376344,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Connecticut","abbr":"CT","year":2022,"reg_rejection_rate":null,"purge_rate":0.06309784120061622,"mail_rejection_rate":0.01648527843039731,"provisional_rejection_rate":0.4166666666666667,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Delaware","abbr":"DE","year":2020,"reg_rejection_rate":0.03190255302374147,"purge_rate":0.05376977903719486,"mail_rejection_rate":0.012858840682700908,"provisional_rejection_rate":0.7575057736720554,"reg_class":"Moderate","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Delaware","abbr":"DE","year":2022,"reg_rejection_rate":0.0014917145909576523,"purge_rate":0.06107813786197025,"mail_rejection_rate":0.13209870911827762,"provisional_rejection_rate":0.7142857142857143,"reg_class":"Low","purge_class":"Low","mail_class":"Very high","prov_class":"Moderate"},{"state":"District of Columbia","abbr":"DC","year":2020,"reg_rejection_rate":0.01832768967169318,"purge_rate":0.1077222810912235,"mail_rejection_rate":0.0030914788989579,"provisional_rejection_rate":0.4273476112026359,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"District of Columbia","abbr":"DC","year":2022,"reg_rejection_rate":0.009718908826885178,"purge_rate":0.02367472522260822,"mail_rejection_rate":0.019137387166959022,"provisional_rejection_rate":0.913953488372093,"reg_class":"Low","purge_class":"Low","mail_class":"Moderate","prov_class":"High"},{"state":"Florida","abbr":"FL","year":2020,"reg_rejection_rate":0.020621794288820352,"purge_rate":0.0662591072576545,"mail_rejection_rate":0.0029299179374590186,"provisional_rejection_rate":0.6528422273781903,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Florida","abbr":"FL","year":2022,"reg_rejection_rate":0.011902534931190999,"purge_rate":0.09734278156922412,"mail_rejection_rate":0.007989256165941263,"provisional_rejection_rate":0.5995723449750534,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Georgia","abbr":"GA","year":2020,"reg_rejection_rate":0.0011237073664877697,"purge_rate":0.06638212882539146,"mail_rejection_rate":0.003649998290487895,"provisional_rejection_rate":0.3462458952524072,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Georgia","abbr":"GA","year":2022,"reg_rejection_rate":0.0005293765299631448,"purge_rate":0.061862638951811266,"mail_rejection_rate":0.01500364685736031,"provisional_rejection_rate":0.34241379310344827,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Guam","abbr":"GU","year":2020,"reg_rejection_rate":0.034074255007327796,"purge_rate":0.17393015600400744,"mail_rejection_rate":0.16279069767441862,"provisional_rejection_rate":0.5534591194968553,"reg_class":"Moderate","purge_class":"Moderate","mail_class":"Very high","prov_class":"Moderate"},{"state":"Guam","abbr":"GU","year":2022,"reg_rejection_rate":null,"purge_rate":0.14820634106809122,"mail_rejection_rate":0.14659685863874344,"provisional_rejection_rate":0.40239043824701193,"reg_class":"Not reported","purge_class":"Moderate","mail_class":"Very high","prov_class":"Low"},{"state":"Hawaii","abbr":"HI","year":2020,"reg_rejection_rate":0.040318815447208695,"purge_rate":0.05726359995483299,"mail_rejection_rate":0.004982017943969981,"provisional_rejection_rate":0.5,"reg_class":"Moderate","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Hawaii","abbr":"HI","year":2022,"reg_rejection_rate":null,"purge_rate":0.061305319365042514,"mail_rejection_rate":0.01242743727545936,"provisional_rejection_rate":0.75,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Idaho","abbr":"ID","year":2020,"reg_rejection_rate":0.001110194348808377,"purge_rate":0.02392686472518434,"mail_rejection_rate":0.010475712757289942,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Not reported"},{"state":"Idaho","abbr":"ID","year":2022,"reg_rejection_rate":null,"purge_rate":null,"mail_rejection_rate":7.772544264639587e-06,"provisional_rejection_rate":null,"reg_class":"Not reported","purge_class":"Not reported","mail_class":"Low","prov_class":"Not reported"},{"state":"Illinois","abbr":"IL","year":2020,"reg_rejection_rate":0.0454465972868545,"purge_rate":0.06571430351690259,"mail_rejection_rate":0.01680892159345379,"provisional_rejection_rate":0.15555599580006735,"reg_class":"Moderate","purge_class":"Low","mail_class":"Moderate","prov_class":"Low"},{"state":"Illinois","abbr":"IL","year":2022,"reg_rejection_rate":0.004780144306441132,"purge_rate":0.07885872770883114,"mail_rejection_rate":0.0086976077140225,"provisional_rejection_rate":0.06658618127786033,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Indiana","abbr":"IN","year":2020,"reg_rejection_rate":0.011724164816784857,"purge_rate":0.21818246918058495,"mail_rejection_rate":0.005415135656756857,"provisional_rejection_rate":0.7536099433375982,"reg_class":"Low","purge_class":"High","mail_class":"Low","prov_class":"Moderate"},{"state":"Indiana","abbr":"IN","year":2022,"reg_rejection_rate":0.010190331905046314,"purge_rate":0.19658552108394373,"mail_rejection_rate":0.01688438638585266,"provisional_rejection_rate":0.655205047318612,"reg_class":"Low","purge_class":"High","mail_class":"Low","prov_class":"Moderate"},{"state":"Iowa","abbr":"IA","year":2020,"reg_rejection_rate":0.0010076494680044206,"purge_rate":0.05658720771134855,"mail_rejection_rate":0.002598100339597375,"provisional_rejection_rate":0.2830188679245283,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Iowa","abbr":"IA","year":2022,"reg_rejection_rate":0.00032565039620798203,"purge_rate":0.03866528599799702,"mail_rejection_rate":0.002417516448035565,"provisional_rejection_rate":0.5081081081081081,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Kansas","abbr":"KS","year":2020,"reg_rejection_rate":null,"purge_rate":0.0700192022743473,"mail_rejection_rate":0.004613230922544497,"provisional_rejection_rate":0.25936543518558436,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Kansas","abbr":"KS","year":2022,"reg_rejection_rate":null,"purge_rate":0.06660335206277866,"mail_rejection_rate":0.010572215422276621,"provisional_rejection_rate":0.2544906709931626,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Kentucky","abbr":"KY","year":2020,"reg_rejection_rate":0.24179786155021518,"purge_rate":0.028097888949096716,"mail_rejection_rate":0.004886581205335687,"provisional_rejection_rate":0.922233300099701,"reg_class":"Very high","purge_class":"Low","mail_class":"Low","prov_class":"High"},{"state":"Kentucky","abbr":"KY","year":2022,"reg_rejection_rate":0.23928550785885808,"purge_rate":0.03656036233920585,"mail_rejection_rate":0.03270766773162939,"provisional_rejection_rate":0.7391304347826086,"reg_class":"Very high","purge_class":"Low","mail_class":"Moderate","prov_class":"Moderate"},{"state":"Louisiana","abbr":"LA","year":2020,"reg_rejection_rate":0.011915054766372555,"purge_rate":0.09594588303151241,"mail_rejection_rate":0.014444933274673706,"provisional_rejection_rate":0.7451587916343919,"reg_class":"Low","purge_class":"Moderate","mail_class":"Moderate","prov_class":"Moderate"},{"state":"Louisiana","abbr":"LA","year":2022,"reg_rejection_rate":0.014739023094051246,"purge_rate":0.0883860057671636,"mail_rejection_rate":0.02563323586374511,"provisional_rejection_rate":0.6954087346024636,"reg_class":"Low","purge_class":"Low","mail_class":"Moderate","prov_class":"Moderate"},{"state":"Maine","abbr":"ME","year":2020,"reg_rejection_rate":0.0013822315030136206,"purge_rate":0.1351214148199154,"mail_rejection_rate":0.003656982741027154,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Not reported"},{"state":"Maine","abbr":"ME","year":2022,"reg_rejection_rate":0.0007911562722008138,"purge_rate":0.10639657899034108,"mail_rejection_rate":0.006069715012428464,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Not reported"},{"state":"Maryland","abbr":"MD","year":2020,"reg_rejection_rate":0.0001634450806020588,"purge_rate":0.06063491901030533,"mail_rejection_rate":0.0019517980915014102,"provisional_rejection_rate":0.0328453486920704,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Maryland","abbr":"MD","year":2022,"reg_rejection_rate":0.00012578562657320966,"purge_rate":0.060487190619364764,"mail_rejection_rate":0.004220529636547967,"provisional_rejection_rate":0.02663685723411051,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Massachusetts","abbr":"MA","year":2020,"reg_rejection_rate":0.008044275823357072,"purge_rate":0.16714319759629778,"mail_rejection_rate":0.006498362835817874,"provisional_rejection_rate":0.5984270182743465,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Massachusetts","abbr":"MA","year":2022,"reg_rejection_rate":0.007898321752018286,"purge_rate":0.14433395385329795,"mail_rejection_rate":0.012192353733513501,"provisional_rejection_rate":0.6423123243677238,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Michigan","abbr":"MI","year":2020,"reg_rejection_rate":0.0005221648844115233,"purge_rate":0.02958229474121599,"mail_rejection_rate":0.007414519424737559,"provisional_rejection_rate":0.8558052434456929,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"High"},{"state":"Michigan","abbr":"MI","year":2022,"reg_rejection_rate":0.008610417428802317,"purge_rate":0.0590654019299249,"mail_rejection_rate":0.014361479040188464,"provisional_rejection_rate":0.7777777777777778,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Minnesota","abbr":"MN","year":2020,"reg_rejection_rate":0.00014105119520145111,"purge_rate":0.05534015399558726,"mail_rejection_rate":0.007136309058976409,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Not reported"},{"state":"Minnesota","abbr":"MN","year":2022,"reg_rejection_rate":0.0004541569172588263,"purge_rate":0.08894514651509298,"mail_rejection_rate":0.021270460129422214,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Low","mail_class":"Moderate","prov_class":"Not reported"},{"state":"Mississippi","abbr":"MS","year":2020,"reg_rejection_rate":0.0022049209425596046,"purge_rate":0.04182630325749633,"mail_rejection_rate":0.023228721272047035,"provisional_rejection_rate":0.34456691095850883,"reg_class":"Low","purge_class":"Low","mail_class":"Moderate","prov_class":"Low"},{"state":"Mississippi","abbr":"MS","year":2022,"reg_rejection_rate":null,"purge_rate":0.0732252993397211,"mail_rejection_rate":null,"provisional_rejection_rate":0.24986862848134525,"reg_class":"Not reported","purge_class":"Low","mail_class":"Not reported","prov_class":"Low"},{"state":"Missouri","abbr":"MO","year":2020,"reg_rejection_rate":3.619217756750927e-05,"purge_rate":0.09489358671114971,"mail_rejection_rate":0.006006858668127964,"provisional_rejection_rate":0.6183118081180812,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Missouri","abbr":"MO","year":2022,"reg_rejection_rate":2.7553839053433783e-05,"purge_rate":0.11073559807679184,"mail_rejection_rate":0.010711939052760562,"provisional_rejection_rate":0.23223792913530383,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Montana","abbr":"MT","year":2020,"reg_rejection_rate":0.0009278138594278666,"purge_rate":0.09862744652071942,"mail_rejection_rate":0.0026571921835514298,"provisional_rejection_rate":0.559322033898305,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Montana","abbr":"MT","year":2022,"reg_rejection_rate":0.0016454793618915417,"purge_rate":0.07949186847056526,"mail_rejection_rate":0.005825917243866479,"provisional_rejection_rate":0.057979972802571396,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Nebraska","abbr":"NE","year":2020,"reg_rejection_rate":0.0005722964495608725,"purge_rate":0.07448469681779069,"mail_rejection_rate":0.00338712195282267,"provisional_rejection_rate":0.2363858550370427,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Nebraska","abbr":"NE","year":2022,"reg_rejection_rate":0.0005782958767738114,"purge_rate":0.08829861697762545,"mail_rejection_rate":0.0042502941878358475,"provisional_rejection_rate":0.17415730337078653,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Nevada","abbr":"NV","year":2020,"reg_rejection_rate":0.02605394792202328,"purge_rate":0.07728272692409921,"mail_rejection_rate":0.008401843928660436,"provisional_rejection_rate":0.047373634419098754,"reg_class":"Moderate","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Nevada","abbr":"NV","year":2022,"reg_rejection_rate":0.030112026965782916,"purge_rate":0.1802676270855955,"mail_rejection_rate":0.019583813236047833,"provisional_rejection_rate":0.12777039007092197,"reg_class":"Moderate","purge_class":"Moderate","mail_class":"Moderate","prov_class":"Low"},{"state":"New Hampshire","abbr":"NH","year":2020,"reg_rejection_rate":0.0,"purge_rate":0.12967819380119489,"mail_rejection_rate":0.007826205872584835,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Not reported"},{"state":"New Hampshire","abbr":"NH","year":2022,"reg_rejection_rate":0.0,"purge_rate":0.29469335043511646,"mail_rejection_rate":0.019954929383633517,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"High","mail_class":"Moderate","prov_class":"Not reported"},{"state":"New Jersey","abbr":"NJ","year":2020,"reg_rejection_rate":0.009692097597365258,"purge_rate":0.04185616372799642,"mail_rejection_rate":0.011779542917222297,"provisional_rejection_rate":0.04512905154264029,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"New Jersey","abbr":"NJ","year":2022,"reg_rejection_rate":0.005821922604383503,"purge_rate":0.06260663625026047,"mail_rejection_rate":0.010031312791326255,"provisional_rejection_rate":0.08340270132380978,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"New Mexico","abbr":"NM","year":2020,"reg_rejection_rate":0.0029390411991849245,"purge_rate":0.058518404756953454,"mail_rejection_rate":0.05003736327102199,"provisional_rejection_rate":0.7500946611132147,"reg_class":"Low","purge_class":"Low","mail_class":"High","prov_class":"Moderate"},{"state":"New Mexico","abbr":"NM","year":2022,"reg_rejection_rate":0.0020480380285745206,"purge_rate":0.03660194880744619,"mail_rejection_rate":0.007231509882386398,"provisional_rejection_rate":0.20069204152249134,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"New York","abbr":"NY","year":2020,"reg_rejection_rate":0.03784789707333829,"purge_rate":0.04279922907240378,"mail_rejection_rate":0.036419013446650994,"provisional_rejection_rate":0.4365297399588894,"reg_class":"Moderate","purge_class":"Low","mail_class":"High","prov_class":"Moderate"},{"state":"New York","abbr":"NY","year":2022,"reg_rejection_rate":0.04854351165293614,"purge_rate":0.029805753940573238,"mail_rejection_rate":0.018425111085096528,"provisional_rejection_rate":0.2775130156187425,"reg_class":"High","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"North Carolina","abbr":"NC","year":2020,"reg_rejection_rate":0.03118681628943714,"purge_rate":0.17407178029809803,"mail_rejection_rate":0.007603257636868823,"provisional_rejection_rate":0.598008192901121,"reg_class":"Moderate","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"North Carolina","abbr":"NC","year":2022,"reg_rejection_rate":0.05586564506398202,"purge_rate":0.13226227757182452,"mail_rejection_rate":0.02162701985887592,"provisional_rejection_rate":0.5461254612546126,"reg_class":"High","purge_class":"Moderate","mail_class":"Moderate","prov_class":"Moderate"},{"state":"North Dakota","abbr":"ND","year":2020,"reg_rejection_rate":null,"purge_rate":null,"mail_rejection_rate":0.0021357276729285623,"provisional_rejection_rate":null,"reg_class":"Not reported","purge_class":"Not reported","mail_class":"Low","prov_class":"Not reported"},{"state":"North Dakota","abbr":"ND","year":2022,"reg_rejection_rate":null,"purge_rate":null,"mail_rejection_rate":0.004275650314934646,"provisional_rejection_rate":null,"reg_class":"Not reported","purge_class":"Not reported","mail_class":"Low","prov_class":"Not reported"},{"state":"Northern Mariana Islands","abbr":"MP","year":2020,"reg_rejection_rate":0.013168086754453912,"purge_rate":0.2725358954982187,"mail_rejection_rate":0.08622754491017964,"provisional_rejection_rate":0.3333333333333333,"reg_class":"Low","purge_class":"High","mail_class":"Very high","prov_class":"Low"},{"state":"Northern Mariana Islands","abbr":"MP","year":2022,"reg_rejection_rate":null,"purge_rate":0.10377750103777501,"mail_rejection_rate":null,"provisional_rejection_rate":null,"reg_class":"Not reported","purge_class":"Moderate","mail_class":"Not reported","prov_class":"Not reported"},{"state":"Ohio","abbr":"OH","year":2020,"reg_rejection_rate":0.05378831327770771,"purge_rate":0.12189879176286741,"mail_rejection_rate":0.004152009042650421,"provisional_rejection_rate":0.15754970098593826,"reg_class":"High","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Ohio","abbr":"OH","year":2022,"reg_rejection_rate":0.04607086940733141,"purge_rate":0.07759898878573342,"mail_rejection_rate":0.002855183141948548,"provisional_rejection_rate":0.0974346690392271,"reg_class":"High","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Oklahoma","abbr":"OK","year":2020,"reg_rejection_rate":0.02436893291337259,"purge_rate":0.10359580134982539,"mail_rejection_rate":0.01816812206807423,"provisional_rejection_rate":0.7138740815444461,"reg_class":"Low","purge_class":"Moderate","mail_class":"Moderate","prov_class":"Moderate"},{"state":"Oklahoma","abbr":"OK","year":2022,"reg_rejection_rate":0.01748199999674723,"purge_rate":0.11179551776074456,"mail_rejection_rate":0.017997026702498715,"provisional_rejection_rate":0.5795369678864825,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Oregon","abbr":"OR","year":2020,"reg_rejection_rate":null,"purge_rate":0.03623325232596207,"mail_rejection_rate":0.007320122598599719,"provisional_rejection_rate":0.5631067961165048,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Oregon","abbr":"OR","year":2022,"reg_rejection_rate":null,"purge_rate":0.039288034777716,"mail_rejection_rate":0.014487169762604314,"provisional_rejection_rate":0.2573099415204678,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Pennsylvania","abbr":"PA","year":2020,"reg_rejection_rate":0.08241102211501908,"purge_rate":0.0978352000058439,"mail_rejection_rate":0.01287679636792268,"provisional_rejection_rate":0.1688640855714452,"reg_class":"High","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Pennsylvania","abbr":"PA","year":2022,"reg_rejection_rate":0.12913578010119028,"purge_rate":0.11193507059053702,"mail_rejection_rate":0.01859042417923353,"provisional_rejection_rate":0.21781965322438768,"reg_class":"Very high","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Puerto Rico","abbr":"PR","year":2020,"reg_rejection_rate":null,"purge_rate":0.3230565551760818,"mail_rejection_rate":null,"provisional_rejection_rate":0.24632692469146167,"reg_class":"Not reported","purge_class":"High","mail_class":"Not reported","prov_class":"Low"},{"state":"Rhode Island","abbr":"RI","year":2020,"reg_rejection_rate":6.582210635441914e-05,"purge_rate":0.06093556308914533,"mail_rejection_rate":0.0003548705193671371,"provisional_rejection_rate":0.44364937388193204,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Rhode Island","abbr":"RI","year":2022,"reg_rejection_rate":0.00014151091730521285,"purge_rate":0.06970298632478843,"mail_rejection_rate":0.008685376661742983,"provisional_rejection_rate":0.5488879563575325,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"South Carolina","abbr":"SC","year":2020,"reg_rejection_rate":null,"purge_rate":0.0363439035091247,"mail_rejection_rate":0.010524627582055138,"provisional_rejection_rate":0.48122020972354623,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"South Carolina","abbr":"SC","year":2022,"reg_rejection_rate":null,"purge_rate":0.07004394605000157,"mail_rejection_rate":0.03211730412507729,"provisional_rejection_rate":0.4092005193841588,"reg_class":"Not reported","purge_class":"Low","mail_class":"Moderate","prov_class":"Moderate"},{"state":"South Dakota","abbr":"SD","year":2020,"reg_rejection_rate":0.00011012542061792597,"purge_rate":0.03801774402760462,"mail_rejection_rate":0.0063935302983647475,"provisional_rejection_rate":0.8454810495626822,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"High"},{"state":"South Dakota","abbr":"SD","year":2022,"reg_rejection_rate":0.00018245708879578322,"purge_rate":0.03718915022405566,"mail_rejection_rate":0.0036393375587814355,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Not reported"},{"state":"Tennessee","abbr":"TN","year":2020,"reg_rejection_rate":0.05300850169463477,"purge_rate":0.11467191918727476,"mail_rejection_rate":0.009580607749749025,"provisional_rejection_rate":0.5496851704422089,"reg_class":"High","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Tennessee","abbr":"TN","year":2022,"reg_rejection_rate":0.03890123807006157,"purge_rate":0.09334577219689777,"mail_rejection_rate":0.016065332351563023,"provisional_rejection_rate":0.6605954465849387,"reg_class":"Moderate","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Texas","abbr":"TX","year":2020,"reg_rejection_rate":0.013393052289769567,"purge_rate":0.10329651366024242,"mail_rejection_rate":0.008401762913258677,"provisional_rejection_rate":0.6044028800794504,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Texas","abbr":"TX","year":2022,"reg_rejection_rate":0.01771420775813456,"purge_rate":0.11482948049933729,"mail_rejection_rate":0.03402676682126409,"provisional_rejection_rate":0.6409742046652779,"reg_class":"Low","purge_class":"Moderate","mail_class":"Moderate","prov_class":"Moderate"},{"state":"Utah","abbr":"UT","year":2020,"reg_rejection_rate":0.13318326685715814,"purge_rate":0.036234604401665545,"mail_rejection_rate":0.007371762055902529,"provisional_rejection_rate":0.0544867965109332,"reg_class":"Very high","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Utah","abbr":"UT","year":2022,"reg_rejection_rate":0.09921499154856325,"purge_rate":0.03591566833808492,"mail_rejection_rate":0.014790755454333704,"provisional_rejection_rate":0.060926821136856144,"reg_class":"Very high","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Vermont","abbr":"VT","year":2020,"reg_rejection_rate":0.021433050796026944,"purge_rate":0.09064803781906773,"mail_rejection_rate":0.005350933582678316,"provisional_rejection_rate":null,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Not reported"},{"state":"Vermont","abbr":"VT","year":2022,"reg_rejection_rate":0.030909940583483543,"purge_rate":0.0909790397974744,"mail_rejection_rate":0.0012743125419181758,"provisional_rejection_rate":null,"reg_class":"Moderate","purge_class":"Low","mail_class":"Low","prov_class":"Not reported"},{"state":"Virgin Islands","abbr":"VI","year":2020,"reg_rejection_rate":null,"purge_rate":0.03620104609962318,"mail_rejection_rate":0.007134363852556481,"provisional_rejection_rate":0.0,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Virgin Islands","abbr":"VI","year":2022,"reg_rejection_rate":null,"purge_rate":0.0003006765221748935,"mail_rejection_rate":0.0,"provisional_rejection_rate":0.23300970873786409,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Low"},{"state":"Virginia","abbr":"VA","year":2020,"reg_rejection_rate":0.016396463165359802,"purge_rate":0.14725328718090236,"mail_rejection_rate":0.0063532747995855374,"provisional_rejection_rate":0.022116903633491312,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Virginia","abbr":"VA","year":2022,"reg_rejection_rate":0.01792257537314801,"purge_rate":0.13709123747843877,"mail_rejection_rate":0.009069526186587783,"provisional_rejection_rate":0.05989423879766212,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Washington","abbr":"WA","year":2020,"reg_rejection_rate":0.00028220170774396027,"purge_rate":0.05819560054236865,"mail_rejection_rate":0.00769537701762684,"provisional_rejection_rate":0.6172839506172839,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Washington","abbr":"WA","year":2022,"reg_rejection_rate":0.00010645478654645464,"purge_rate":0.11855964473584732,"mail_rejection_rate":0.012056606226034964,"provisional_rejection_rate":0.5869565217391305,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"West Virginia","abbr":"WV","year":2020,"reg_rejection_rate":0.0005530363824459291,"purge_rate":0.07409788940161888,"mail_rejection_rate":0.0017831443715118115,"provisional_rejection_rate":0.4570383912248629,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"West Virginia","abbr":"WV","year":2022,"reg_rejection_rate":0.00020074610636197868,"purge_rate":0.17119981824614466,"mail_rejection_rate":0.010340574898017266,"provisional_rejection_rate":0.4047819971870605,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Low"},{"state":"Wisconsin","abbr":"WI","year":2020,"reg_rejection_rate":null,"purge_rate":0.05165689313237514,"mail_rejection_rate":0.0022841476627522253,"provisional_rejection_rate":0.6086956521739131,"reg_class":"Not reported","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"},{"state":"Wisconsin","abbr":"WI","year":2022,"reg_rejection_rate":null,"purge_rate":0.17546103905304034,"mail_rejection_rate":0.009243284357376076,"provisional_rejection_rate":0.650294695481336,"reg_class":"Not reported","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Wyoming","abbr":"WY","year":2020,"reg_rejection_rate":0.0019413864056451332,"purge_rate":0.15134846179990694,"mail_rejection_rate":0.0020203907645952794,"provisional_rejection_rate":0.625,"reg_class":"Low","purge_class":"Moderate","mail_class":"Low","prov_class":"Moderate"},{"state":"Wyoming","abbr":"WY","year":2022,"reg_rejection_rate":0.00017509832444372609,"purge_rate":0.07634856970632363,"mail_rejection_rate":0.00453881469115192,"provisional_rejection_rate":0.6511627906976745,"reg_class":"Low","purge_class":"Low","mail_class":"Low","prov_class":"Moderate"}];
+const AVGS = {"2020":{"reg_rejection_rate":0.025930184769709708,"purge_rate":0.08947947239829042,"mail_rejection_rate":0.013795449610274617,"provisional_rejection_rate":0.42271595577313775},"2022":{"reg_rejection_rate":0.022207056736506005,"purge_rate":0.09195236734712899,"mail_rejection_rate":0.018756781474506486,"provisional_rejection_rate":0.4086359305554545}};
+
+const METRICS = [
+  {key:'reg_rejection_rate',        cls:'reg_class',  label:'Reg. Rejection',        full:'Registration Rejection Rate'},
+  {key:'purge_rate',                cls:'purge_class', label:'Purge Rate',             full:'Voter Purge / Removal Rate'},
+  {key:'mail_rejection_rate',       cls:'mail_class',  label:'Mail Ballot Rejection',  full:'Mail Ballot Rejection Rate'},
+  {key:'provisional_rejection_rate',cls:'prov_class',  label:'Provisional Rejection',  full:'Provisional Ballot Rejection Rate'},
+];
+
+const COLORS = {
+  'Low':          '#2dc4b2',
+  'Moderate':     '#f0a500',
+  'High':         '#e07040',
+  'Very high':    '#cc3333',
+  'Not reported': '#2d3154',
+};
+
+const MAX_VALS = {};
+for (const m of METRICS) {
+  const vs = DATA.filter(d => d[m.key] !== null).map(d => d[m.key]);
+  MAX_VALS[m.key] = vs.length ? Math.max(...vs) : 0.01;
+}
+
+let metric = 'reg_rejection_rate';
+let year   = 2022;
+let selected = null;
+
+function setMetric(m) {
+  metric = m;
+  METRICS.forEach(mi =>
+    document.getElementById('mb-' + mi.key).classList.toggle('on', mi.key === m)
+  );
+  renderGrid();
+  if (selected) renderDetail(selected);
+}
+
+function setYear(y) {
+  year = y;
+  [2022, 2020].forEach(yr =>
+    document.getElementById('yb-' + yr).classList.toggle('on', yr === y)
+  );
+  renderGrid();
+  if (selected) renderDetail(selected);
+}
+
+function selectTile(abbr) {
+  selected = abbr;
+  renderGrid();
+  renderDetail(abbr);
+  document.getElementById('detail').style.display = 'block';
+  setTimeout(() => document.getElementById('detail').scrollIntoView({behavior:'smooth', block:'nearest'}), 60);
+}
+
+function closeDetail() {
+  selected = null;
+  document.getElementById('detail').style.display = 'none';
+  renderGrid();
+}
+
+function getRow(abbr, yr) {
+  return DATA.find(d => d.abbr === abbr && d.year === yr) || null;
+}
+
+function pct(v, digits=1) {
+  return (v === null || v === undefined) ? 'n/a' : (v * 100).toFixed(digits) + '%';
+}
+
+function renderGrid() {
+  const rows = DATA.filter(d => d.year === year);
+  const mobj = METRICS.find(m => m.key === metric);
+
+  rows.sort((a, b) => {
+    const av = a[metric], bv = b[metric];
+    if (av === null && bv === null) return a.abbr < b.abbr ? -1 : 1;
+    if (av === null) return 1;
+    if (bv === null) return -1;
+    return bv - av;
+  });
+
+  document.getElementById('state-grid').innerHTML = rows.map(d => {
+    const cls = d[mobj.cls] || 'Not reported';
+    const col = COLORS[cls];
+    const isSel = d.abbr === selected;
+    const bdr = isSel ? '2px solid rgba(255,255,255,0.9)' : '2px solid transparent';
+    const flt = isSel ? 'filter:brightness(1.3)' : '';
+    return `<div class="tile" style="background:${col};border:${bdr};${flt}" onclick="selectTile('${d.abbr}')">
+      <div class="tile-abbr">${d.abbr}</div>
+      <div class="tile-val">${pct(d[metric])}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderDetail(abbr) {
+  const r20  = getRow(abbr, 2020);
+  const r22  = getRow(abbr, 2022);
+  const rAct = year === 2022 ? r22 : r20;
+  if (!rAct) return;
+
+  document.getElementById('det-title').textContent = rAct.state + ' — ' + year;
+
+  const av = AVGS[String(year)] || {};
+  let tbl = `<table class="dtbl"><thead><tr>
+    <th>Metric</th><th>Value</th><th>Nat'l Avg</th><th>Class</th>
+  </tr></thead><tbody>`;
+  for (const m of METRICS) {
+    const v   = rAct[m.key];
+    const a   = av[m.key];
+    const cls = rAct[m.cls] || 'Not reported';
+    const col = COLORS[cls];
+    tbl += `<tr>
+      <td>${m.full}</td>
+      <td>${pct(v)}</td>
+      <td style="color:var(--mut)">${pct(a)}</td>
+      <td><span style="color:${col};font-weight:600">${cls}</span></td>
+    </tr>`;
+  }
+  tbl += '</tbody></table>';
+  document.getElementById('det-table').innerHTML = tbl;
+  document.getElementById('det-bars').innerHTML = buildChangeBars(r20, r22);
+}
+
+function buildChangeBars(r20, r22) {
+  if (!r20 && !r22) {
+    return '<p style="color:var(--mut);font-size:12px;padding-top:8px">No data for either year.</p>';
+  }
+
+  const W=580, ML=188, MR=78, MT=8, RH=54, BH=12;
+  const cw  = W - ML - MR;
+  const H   = MT + METRICS.length * RH + 6;
+  const MUT = '#8892b0', TXT = '#dde1ee', GRD = '#1e2236',
+        GRN = '#56d364', RED = '#f76c5e';
+
+  let s = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  for (let i = 0; i < METRICS.length; i++) {
+    const m  = METRICS[i];
+    const y0 = MT + i * RH;
+    const v20 = r20 ? r20[m.key] : null;
+    const v22 = r22 ? r22[m.key] : null;
+    const mx  = MAX_VALS[m.key];
+
+    if (i > 0) {
+      s += `<line x1="0" y1="${y0}" x2="${W}" y2="${y0}" stroke="${GRD}" stroke-width="1"/>`;
+    }
+
+    // Metric label (short, right-aligned into left margin)
+    s += `<text x="${ML-8}" y="${y0+13}" text-anchor="end" font-family="Inter,sans-serif" font-size="11" fill="${TXT}">${m.label}</text>`;
+
+    // 2020 row
+    s += `<text x="${ML-8}" y="${y0+28}" text-anchor="end" font-family="Inter,sans-serif" font-size="9" fill="${MUT}">2020</text>`;
+    if (v20 !== null) {
+      const w = Math.max((v20 / mx) * cw, 2);
+      s += `<rect x="${ML}" y="${y0+18}" width="${w}" height="${BH}" rx="2" fill="#4f8ef7" fill-opacity="0.6"/>`;
+      s += `<text x="${ML+w+4}" y="${y0+28}" font-family="Inter,sans-serif" font-size="10" fill="${MUT}">${pct(v20)}</text>`;
+    } else {
+      s += `<text x="${ML+4}" y="${y0+28}" font-family="Inter,sans-serif" font-size="10" font-style="italic" fill="${MUT}">n/a</text>`;
+    }
+
+    // 2022 row
+    s += `<text x="${ML-8}" y="${y0+44}" text-anchor="end" font-family="Inter,sans-serif" font-size="9" fill="${MUT}">2022</text>`;
+    if (v22 !== null) {
+      const cls22 = r22 ? (r22[m.cls] || 'Not reported') : 'Not reported';
+      const col22 = COLORS[cls22];
+      const w = Math.max((v22 / mx) * cw, 2);
+      s += `<rect x="${ML}" y="${y0+34}" width="${w}" height="${BH}" rx="2" fill="${col22}"/>`;
+      s += `<text x="${ML+w+4}" y="${y0+44}" font-family="Inter,sans-serif" font-size="10" fill="${MUT}">${pct(v22)}</text>`;
+    } else {
+      s += `<text x="${ML+4}" y="${y0+44}" font-family="Inter,sans-serif" font-size="10" font-style="italic" fill="${MUT}">n/a</text>`;
+    }
+
+    // Delta label (right side)
+    if (v20 !== null && v22 !== null) {
+      const delta = v22 - v20;
+      const sign  = delta >= 0 ? '+' : '';
+      const col   = Math.abs(delta) < 0.001 ? MUT : (delta > 0 ? RED : GRN);
+      const arrow = Math.abs(delta) < 0.001 ? '–' : (delta > 0 ? '▲' : '▼');
+      s += `<text x="${W-MR+6}" y="${y0+28}" font-family="Inter,sans-serif" font-size="10" font-weight="600" fill="${col}">${sign}${(delta*100).toFixed(1)}pp</text>`;
+      s += `<text x="${W-MR+6}" y="${y0+44}" font-family="Inter,sans-serif" font-size="11" fill="${col}">${arrow}</text>`;
+    }
+  }
+
+  s += '</svg>';
+  return s;
+}
+
+window.addEventListener('DOMContentLoaded', renderGrid);
+</script>
+</body>
+</html>

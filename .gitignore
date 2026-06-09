@@ -133,11 +133,13 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.claude
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.venv-old/
 
 # Spyder project settings
 .spyderproject
@@ -151,6 +153,9 @@ venv.bak/
 
 # temporary documentation
 /tmp
+
+# Claude Code guidance file and local working notes (local only)
+CLAUDE_NOTES_state_aggregation.md
 
 # mypy
 .mypy_cache/
