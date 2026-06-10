@@ -5,10 +5,11 @@ import numpy as np
 import pandas as pd
 from loguru import logger
 
-from eavs.config import CLEANED_DATA_DIR, PROCESSED_DATA_DIR
+from eavs.config import CLEANED_DATA_DIR, PROCESSED_DATA_DIR, PROJ_ROOT
 
 TIMESERIES_PATH = CLEANED_DATA_DIR / "timeseries.parquet"
-OUTPUT_PATH = PROCESSED_DATA_DIR / "eavs_dashboard_page2.html"
+DASHBOARDS_DIR  = PROJ_ROOT / "dashboards"
+OUTPUT_PATH     = DASHBOARDS_DIR / "eavs_dashboard_page2.html"
 
 SENTINEL_COLS = [
     "total_registrations_received",
@@ -161,6 +162,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .hdr h1 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
     .hdr p  { font-size: 12px; color: var(--mut); margin-top: 3px; }
 
+    /* ── About / methodology ── */
+    .about-data { border-top: 1px solid var(--bdr); margin-top: 4px; }
+    .about-hdr  { padding: 9px 24px; font-size: 12px; color: var(--mut); cursor: pointer;
+                  font-weight: 600; user-select: none; }
+    .about-hdr:hover { color: var(--txt); }
+    .about-body { padding: 2px 24px 16px; }
+    .about-section { margin-bottom: 12px; font-size: 11px; color: var(--mut); line-height: 1.75; }
+    .about-section strong { color: var(--txt); font-weight: 600; }
+    .about-tag { display: inline-block; background: var(--surf-hi); border: 1px solid var(--bdr);
+                 border-radius: 3px; padding: 0 5px; font-size: 10px; margin-right: 4px; }
+    .crossnote { font-size: 11px; color: var(--mut); font-style: italic;
+                 border-top: 1px solid var(--bdr); padding-top: 10px; margin-top: 4px;
+                 line-height: 1.7; }
+
     /* ── Controls ── */
     .ctrl { padding: 10px 24px; display: flex; gap: 20px; align-items: center;
             flex-wrap: wrap; border-bottom: 1px solid var(--bdr); background: var(--surf); }
@@ -216,7 +231,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
 <div class="hdr">
   <h1>Voter Process Integrity Dashboard — Page 2</h1>
-  <p>Registration rejection, voter purge, mail ballot rejection, and provisional ballot rejection rates · Source: EAVS</p>
+  <p>Administrative data reported by election officials to the EAC · Source: EAC Election Administration and Voting Survey (EAVS)</p>
 </div>
 
 <div class="ctrl">
@@ -264,9 +279,51 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 </div>
 
 <div class="footnote">
-  <strong>Notes:</strong> Sentinel values (−88, −99) reported by jurisdictions that do not collect or were unable to report this data were treated as "not reported" and excluded from rate calculations.
+  <strong>Source:</strong> EAC Election Administration and Voting Survey (EAVS), aggregated from jurisdiction level to state level.
+  Sentinel values (−88 does not apply, −99 data not available) reported by jurisdictions were treated as "not reported" and excluded from rate calculations.
   States where all jurisdictions reported sentinels show no rate.
   Pennsylvania and several other states show elevated registration rejection rates because DMV automatic voter registration systems may count incomplete or duplicate form submissions as rejections.
+  Maine 2020/2022 and South Dakota 2022 provisional rejection rates are suppressed due to known data anomalies.
+</div>
+
+<div class="about-data">
+  <div class="about-hdr" onclick="const b=document.getElementById('about-body');b.style.display=b.style.display==='none'?'block':'none'">
+    ▾ About the data &amp; methodology
+  </div>
+  <div class="about-body" id="about-body" style="display:none">
+    <div class="about-section">
+      <strong>Election Administration and Voting Survey (EAVS)</strong><br>
+      <span class="about-tag">EAC</span> Biennial (federal election years) · Reported by: state and local election administrators<br>
+      Measures: Administrative counts — ballots cast, voter registrations, rejections, purges, mail ballot activity.<br>
+      Limitation: Self-reported by election officials; anomalies reflect administrative practices, not necessarily voter behaviour.<br>
+      Coverage: All 50 states + DC + territories · Years in this dashboard: 2020, 2022
+    </div>
+    <div class="about-section">
+      <strong>Metric formulas (source columns from EAVS codebook)</strong><br>
+      Registration Rejection Rate: Rejected applications (A3e) ÷ Total applications received (A3a)<br>
+      Purge Rate: Voters removed (A9a) ÷ Total registered voters (A1a)<br>
+      Mail Ballot Rejection Rate: Mail ballots rejected (C9a) ÷ Mail ballots returned (C1b)<br>
+      Provisional Rejection Rate: Provisional ballots rejected (E1d) ÷ Provisional ballots cast (E1a)
+    </div>
+    <div class="about-section">
+      <strong>Classification thresholds:</strong>
+      Low = below national average · Moderate = up to 2× average · High = 2–4× average · Very high = &gt;4× average.
+      National average computed per year from states with reported data only.
+    </div>
+    <div class="about-section">
+      <strong>Current Population Survey (CPS) Voting Supplement — Table 4b</strong><br>
+      <span class="about-tag">Census Bureau</span> Not used on this page. Race-disaggregated self-reported participation rates appear on Page 3.
+    </div>
+    <div class="about-section">
+      <strong>American Community Survey (ACS) — CVAP Special Tabulation</strong><br>
+      <span class="about-tag">Census Bureau</span> Not used on this page. CVAP denominators appear on Page 1.
+    </div>
+    <div class="crossnote">
+      EAVS rates shown here are for the total population — EAVS does not collect race-disaggregated administrative data.
+      These administrative barrier rates cannot be directly compared to the race-disaggregated participation rates on Page 3,
+      which use different denominators and a different data source (CPS).
+    </div>
+  </div>
 </div>
 
 <script>
@@ -274,10 +331,14 @@ const DATA = __DATA__;
 const AVGS = __AVGS__;
 
 const METRICS = [
-  {key:'reg_rejection_rate',        cls:'reg_class',  label:'Reg. Rejection',        full:'Registration Rejection Rate'},
-  {key:'purge_rate',                cls:'purge_class', label:'Purge Rate',             full:'Voter Purge / Removal Rate'},
-  {key:'mail_rejection_rate',       cls:'mail_class',  label:'Mail Ballot Rejection',  full:'Mail Ballot Rejection Rate'},
-  {key:'provisional_rejection_rate',cls:'prov_class',  label:'Provisional Rejection',  full:'Provisional Ballot Rejection Rate'},
+  {key:'reg_rejection_rate',        cls:'reg_class',  label:'Reg. Rejection',       full:'Registration Rejection Rate',
+   formula:'Rejected applications (A3e) ÷ Total applications received (A3a)'},
+  {key:'purge_rate',                cls:'purge_class', label:'Purge Rate',            full:'Voter Purge / Removal Rate',
+   formula:'Voters removed (A9a) ÷ Total registered voters (A1a)'},
+  {key:'mail_rejection_rate',       cls:'mail_class',  label:'Mail Ballot Rejection', full:'Mail Ballot Rejection Rate',
+   formula:'Mail ballots rejected (C9a) ÷ Mail ballots returned (C1b)'},
+  {key:'provisional_rejection_rate',cls:'prov_class',  label:'Provisional Rejection', full:'Provisional Ballot Rejection Rate',
+   formula:'Provisional ballots rejected (E1d) ÷ Provisional ballots cast (E1a)'},
 ];
 
 const COLORS = {
@@ -381,7 +442,10 @@ function renderDetail(abbr) {
     const cls = rAct[m.cls] || 'Not reported';
     const col = COLORS[cls];
     tbl += `<tr>
-      <td>${m.full}</td>
+      <td>
+        <div style="font-weight:500">${m.full}</div>
+        <div style="font-size:10px;color:var(--mut);margin-top:2px;font-family:monospace">${m.formula}</div>
+      </td>
       <td>${pct(v)}</td>
       <td style="color:var(--mut)">${pct(a)}</td>
       <td><span style="color:${col};font-weight:600">${cls}</span></td>
@@ -477,7 +541,7 @@ def main():
         return
     records, avgs = _prepare()
     html = _html(records, avgs)
-    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DASHBOARDS_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_PATH.write_text(html, encoding="utf-8")
     size = OUTPUT_PATH.stat().st_size
     logger.info(f"Saved: {OUTPUT_PATH}  ({size:,} bytes, {len(records)} records)")

@@ -4,10 +4,11 @@ import re
 import pandas as pd
 from loguru import logger
 
-from eavs.config import PROCESSED_DATA_DIR
+from eavs.config import PROCESSED_DATA_DIR, PROJ_ROOT
 
-INPUT_PATH = PROCESSED_DATA_DIR / "state_rates.parquet"
-OUTPUT_PATH = PROCESSED_DATA_DIR / "eavs_dashboard_page1.html"
+INPUT_PATH     = PROCESSED_DATA_DIR / "state_rates.parquet"
+DASHBOARDS_DIR = PROJ_ROOT / "dashboards"
+OUTPUT_PATH    = DASHBOARDS_DIR / "eavs_dashboard_page1.html"
 
 
 def _title_fix(s: str) -> str:
@@ -114,6 +115,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .hdr h1 { font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
     .hdr p  { font-size: 12px; color: var(--mut); margin-top: 3px; }
 
+    /* ── About / methodology ── */
+    .about-data { border-top: 1px solid var(--bdr); margin-top: 4px; }
+    .about-hdr  { padding: 9px 24px; font-size: 12px; color: var(--mut); cursor: pointer;
+                  font-weight: 600; user-select: none; }
+    .about-hdr:hover { color: var(--txt); }
+    .about-body { padding: 2px 24px 16px; }
+    .about-section { margin-bottom: 12px; font-size: 11px; color: var(--mut); line-height: 1.75; }
+    .about-section strong { color: var(--txt); font-weight: 600; }
+    .about-tag { display: inline-block; background: var(--surf-hi); border: 1px solid var(--bdr);
+                 border-radius: 3px; padding: 0 5px; font-size: 10px; margin-right: 4px; }
+    .crossnote { font-size: 11px; color: var(--mut); font-style: italic;
+                 border-top: 1px solid var(--bdr); padding-top: 10px; margin-top: 4px;
+                 line-height: 1.7; }
+
     /* ── Controls ── */
     .ctrl { padding: 10px 24px; display: flex; gap: 20px; align-items: center;
             flex-wrap: wrap; border-bottom: 1px solid var(--bdr); background: var(--surf); }
@@ -158,8 +173,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <body>
 
 <div class="hdr">
-  <h1>Voter Participation Dashboard</h1>
-  <p>Self-reported data by election jurisdictions — Election Administration and Voting Survey (EAVS), U.S. Election Assistance Commission</p>
+  <h1>Voter Participation Dashboard — Page 1</h1>
+  <p>Administrative data reported by election officials to the EAC · Election Administration and Voting Survey (EAVS), U.S. Election Assistance Commission</p>
 </div>
 
 <div class="ctrl">
@@ -212,6 +227,43 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <strong>Turnout rate (EAC method):</strong> F1a ÷ active registered voters (A1b).
   6 states (ID, MN, NH, ND, Guam, PR) do not distinguish active/inactive voters — A1a (total registered) used as fallback for those states. Marked †.
   Additional states where active and total registered counts are equal in EAVS data are also shown with †.
+</div>
+
+<div class="about-data">
+  <div class="about-hdr" onclick="const b=document.getElementById('about-body');b.style.display=b.style.display==='none'?'block':'none'">
+    ▾ About the data &amp; methodology
+  </div>
+  <div class="about-body" id="about-body" style="display:none">
+    <div class="about-section">
+      <strong>Election Administration and Voting Survey (EAVS)</strong><br>
+      <span class="about-tag">EAC</span> Biennial (federal election years) · Reported by: state and local election administrators<br>
+      Measures: Administrative counts — ballots cast, voter registrations, rejections, purges, mail ballot activity.<br>
+      Limitation: Self-reported by election officials; anomalies reflect administrative practices, not necessarily voter behaviour.<br>
+      Coverage: All 50 states + DC + territories · Years in this dashboard: 2020, 2022
+    </div>
+    <div class="about-section">
+      <strong>Registration rate denominator:</strong>
+      Registered voters (EAVS A1a or A1b) ÷ Citizen Voting-Age Population (ACS CVAP 5-year estimates, U.S. Census Bureau).
+      A1a = total registered (active + inactive); A1b = active voters only (EAC-preferred). Toggle above to switch.<br>
+      <strong>Turnout rate denominator:</strong>
+      Total ballots cast (EAVS F1a, all modes: Election Day in-person, early in-person, mail, counted provisional, UOCAVA)
+      ÷ Active registered voters (EAVS A1b); fallback to A1a for states that do not distinguish active/inactive voters (marked †).
+    </div>
+    <div class="about-section">
+      <strong>American Community Survey (ACS) — CVAP Special Tabulation</strong><br>
+      <span class="about-tag">Census Bureau</span> Annual (5-year rolling estimates used here)<br>
+      Measures: Citizen Voting Age Population (CVAP) — U.S. citizens aged 18+ by race and geography.<br>
+      Used for: Registration rate denominator (Registered voters ÷ CVAP).<br>
+      Vintage used: ACS 2018–2022 5-year estimates
+    </div>
+    <div class="about-section">
+      <strong>Current Population Survey (CPS) Voting Supplement — Table 4b</strong><br>
+      <span class="about-tag">Census Bureau</span> Not used on this page. Race-disaggregated participation rates appear on Page 3.
+    </div>
+    <div class="crossnote">
+      Registration rates above 100% are real — they reflect stale voter rolls where EAVS-reported registrations exceed the ACS CVAP estimate. These are flagged in red and are not suppressed.
+    </div>
+  </div>
 </div>
 
 <script>
@@ -390,7 +442,7 @@ def main():
     df = pd.read_parquet(INPUT_PATH)
     records = _build_records(df)
     html = _html(records)
-    PROCESSED_DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DASHBOARDS_DIR.mkdir(parents=True, exist_ok=True)
     OUTPUT_PATH.write_text(html, encoding="utf-8")
     size = OUTPUT_PATH.stat().st_size
     logger.info(f"Saved: {OUTPUT_PATH}  ({size:,} bytes, {len(records)} records)")

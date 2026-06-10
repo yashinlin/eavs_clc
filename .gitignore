@@ -154,9 +154,6 @@ venv.bak/
 # temporary documentation
 /tmp
 
-# Claude Code guidance file and local working notes (local only)
-CLAUDE_NOTES_state_aggregation.md
-
 # mypy
 .mypy_cache/
 .dmypy.json
