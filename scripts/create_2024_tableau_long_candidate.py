@@ -22,6 +22,11 @@ rename_ids = {
 df = df.rename(columns=rename_ids)
 df["Year"] = 2024
 
+# Spec sums the three "other" mail-rejection reasons (C9r+C9s+C9t) into one
+df["mail_ballots_rejected_other"] = df[
+    ["mail_ballots_rejected_other_1", "mail_ballots_rejected_other_2", "mail_ballots_rejected_other_3"]
+].apply(pd.to_numeric, errors="coerce").sum(axis=1, min_count=1)
+
 ID_OUT = ["FIPSCode", "Jurisdiction_Name", "State_Full", "State_Abbr", "Year"]
 
 # Sheet1-style count data: Metric / Count / Value
@@ -36,6 +41,47 @@ COUNT_MAPPINGS = [
     ("Applicants", "Armed Forces", "total_forms_armed_forces"),
     ("Applicants", "Non-NVRA", "total_forms_discretionary_nvra"),
     ("Applicants", "Registered Drives", "total_forms_advocacy_groups"),
+
+    # Ballots / rejections
+    ("Provisional Rejected", "Total", "provisional_ballots_rejected_total"),
+    ("Provisional Rejected", "Not Registered", "provisional_ballots_rejected_not_registered"),
+    ("Provisional Rejected", "Wrong Jurisdiction", "provisional_ballots_rejected_wrong_jurisdiction"),
+    ("Provisional Rejected", "Wrong Precinct", "provisional_ballots_rejected_wrong_precinct"),
+    ("Provisional Rejected", "Insuffic ID", "provisional_ballots_rejected_no_id"),
+    ("Provisional Rejected", "Incomplete Ballot/Env", "provisional_ballots_rejected_incomplete"),
+    ("Provisional Rejected", "Ballot Missing", "provisional_ballots_rejected_ballot_missing"),
+    ("Provisional Rejected", "No Signature", "provisional_ballots_rejected_no_signature"),
+    ("Provisional Rejected", "No Match Signature", "provisional_ballots_rejected_non_matching_signature"),
+    ("Provisional Rejected", "Already Voted", "provisional_ballots_rejected_already_voted"),
+
+    # Registration rejections BY SOURCE (EAVS has no rejection *reasons* for registrations)
+    ("Registrations Rejected", "Total", "rejected_registrations"),
+    ("Registrations Rejected", "Mail", "rejected_registrations_mail_fax_email"),
+    ("Registrations Rejected", "In Person", "rejected_registrations_in_person"),
+    ("Registrations Rejected", "Online", "rejected_registrations_online"),
+    ("Registrations Rejected", "DMV", "rejected_registrations_dmv"),
+    ("Registrations Rejected", "NVRA", "rejected_registrations_mandatory_nvra"),
+    ("Registrations Rejected", "Disabilities", "rejected_registrations_disability_agency"),
+    ("Registrations Rejected", "Armed Forces", "rejected_registrations_armed_forces"),
+    ("Registrations Rejected", "Non-NVRA", "rejected_registrations_discretionary_nvra"),
+    ("Registrations Rejected", "Registered Drives", "rejected_registrations_advocacy_groups"),
+
+    # Mail ballot rejections by reason (C9a-C9t)
+    ("Mail Rejected", "Total", "mail_ballots_rejected_total"),
+    ("Mail Rejected", "Late / Missed Deadline", "mail_ballots_rejected_late"),
+    ("Mail Rejected", "No Voter Signature", "mail_ballots_rejected_missing_voter_signature"),
+    ("Mail Rejected", "No Witness Signature", "mail_ballots_rejected_missing_witness_signature"),
+    ("Mail Rejected", "Non-Matching Signature", "mail_ballots_rejected_non_matching_voter_signature"),
+    ("Mail Rejected", "Unofficial Envelope", "mail_ballots_rejected_unofficial_envelope"),
+    ("Mail Rejected", "Ballot Missing from Envelope", "mail_ballots_rejected_ballot_missing_from_envelope"),
+    ("Mail Rejected", "Multiple Ballots in Envelope", "mail_ballots_rejected_multiple_ballots_one_envelope"),
+    ("Mail Rejected", "Envelope Not Sealed", "mail_ballots_rejected_envelope_not_sealed"),
+    ("Mail Rejected", "No Address on Envelope", "mail_ballots_rejected_no_resident_address"),
+    ("Mail Rejected", "Voter Deceased", "mail_ballots_rejected_voter_deceased"),
+    ("Mail Rejected", "Already Voted", "mail_ballots_rejected_voter_already_voted"),
+    ("Mail Rejected", "Missing Documentation", "mail_ballots_rejected_missing_documentation"),
+    ("Mail Rejected", "No Ballot Application", "mail_ballots_rejected_no_ballot_application"),
+    ("Mail Rejected", "Other", "mail_ballots_rejected_other"),
 
     # Purged / removals counts
     ("Purged", "Felony", "voters_removed_felony"),
@@ -68,7 +114,22 @@ RATE_MAPPINGS = [
     # Purged: total removals / approximate registered + removed population
     # This follows the earlier CLC denominator logic: A12a / (A1a + A12a)
     ("Purged", "registered_eligible_voters", "voters_removed_total"),
+    # Purged, EAC dashboard formula: A12a / A1a (removed / registered)
+    ("Purged (EAC)", "registered_eligible_voters", "voters_removed_total"),
+    # Provisional: E1d / E1a (CLC spec; matches EAC dashboard)
+    ("Provisional Rejected", "provisional_ballots_cast_total", "provisional_ballots_rejected_total"),
+    # Mail: C9a / C1b (rejected / returned by voters -- matches EAC Appendix D)
+    ("Mail Rejected", "mail_returned_by_voters", "mail_ballots_rejected_total"),
+
 ]
+
+# Fail loudly: one typo'd column must stop the script, not silently drop a reason
+needed = [col for _, _, col in COUNT_MAPPINGS] + \
+         [c for _, d, n in RATE_MAPPINGS for c in (d, n)]
+missing = sorted(set(needed) - set(df.columns))
+if missing:
+    raise KeyError(f"Columns missing from {input_path.name}: {missing}")
+
 
 rate_frames = []
 
